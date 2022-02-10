@@ -1,3 +1,4 @@
+from multiprocessing.sharedctypes import Value
 import requests, json, time, os
 from steam.steamid import SteamID
 
@@ -27,8 +28,6 @@ class VACTracker():
     def checker(self):
         while True:
 
-            self.refresh()
-
             request = self.makeRequest()
 
             self.request = request
@@ -53,7 +52,9 @@ class VACTracker():
                 #else: print("mismatch steam id")
 
                 if ban_vac == True:
-                    self.banned.append(f"Player {persona_name}, Days since last: {days}, Count: {count_vac} steamid: {json.loads(request.text)['players'][player]['SteamId']}, url: {SteamID(self.players[player]).community_url}")
+                    try:
+                        self.banned.append(f"Player {persona_name}, Days since last: {days}, Count: {count_vac} steamid: {json.loads(request.text)['players'][player]['SteamId']}, url: {SteamID(self.players[player]).community_url}")
+                    except IndexError: pass
             time.sleep(5)
 
     def console(self):
@@ -66,10 +67,38 @@ class VACTracker():
                 try:
                     int(command[1])
                     self.players_writeable.write(f"{command[1]},")
-                    print("user sucessfully added, please be patient, it might take a while to refresh the list.")
+                    print("User sucessfully added, please be patient, it might take a while to refresh the list. (SteamID)")
                     self.refresh()
-                except:
-                    pass
+                except ValueError:
+                    steamid = SteamID.from_url(f'https://steamcommunity.com/id/{command[1]}')
+                    self.players_writeable.write(f"{steamid},")
+                    print("User sucessfully added, please be patient, it might take a while to refresh the list. (Username)")
+                    self.refresh()
+                except: pass
+
+            if command[0] == "REMOVE":
+                try:
+                    int(command[1])
+                    try: 
+                        index = self.players.index(f"{command[1]}")
+                        self.players.pop(index)
+                        players_rewritable = open("players.txt", "w")
+                        players_rewritable.write(str(self.players).split("[")[1].split("]")[0])
+                        print("User sucessfully removed, please be patient, it might take a while to refresh the list. (SteamID)")
+                        self.refresh()
+                    except: print("No such user")
+                except ValueError:
+                    steamid = SteamID.from_url(f'https://steamcommunity.com/id/{command[1]}')
+                    try:
+                        index = self.players.index(steamid)
+                        self.players.pop(index)
+                        players_rewritable = open("players.txt", "w")
+                        players_rewritable.write(str(self.players).split("[")[1].split("]")[0])
+                        print("User sucessfully removed, please be patient, it might take a while to refresh the list. (Username)")
+                        self.refresh()
+                    except: print("No such user")
+                except: pass
+
             if command[0] == "ALL":
                 os.system('clear')
                 print("---VACTRACKER SHELL---")
@@ -78,8 +107,8 @@ class VACTracker():
                 for player in range(0, len(self.players)):
                     profile = requests.get(f'https://steamcommunity.com/profiles/{self.filtered_list[player]}')
                     persona_name = profile.text.split("actual_persona_name\">")[1].split("<")[0]
-                    banned = json.loads(self.request.text)['players'][player]['VACBanned']
-                    temp_list.append(f"{persona_name}: {banned}")
+                    ban_vac = json.loads(self.request.text)['players'][player]['VACBanned']
+                    temp_list.append(f"{persona_name}: VAC-{ban_vac}")
                 os.system('clear')
                 print("---VACTRACKER SHELL---")
                 for name in temp_list:
@@ -90,6 +119,8 @@ class VACTracker():
                 print("---VACTRACKER SHELL---")
                 for player in self.banned:
                     print(player)
+            
+
 
 
 VACTracker = VACTracker()
