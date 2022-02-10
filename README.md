@@ -1,1 +1,1 @@
-vactracker
+Server tool for tracking bans and other info about players
