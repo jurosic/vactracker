@@ -8,10 +8,13 @@ class VACTracker():
         self.refresh()
 
     def refresh(self):
+        self.player_txt_path = "Data/Files/players.txt"
+        self.pleyer_info_path = "Data/Files/info.json"
         self.banned = []
         self.players = []
-        self.players_readable = open("players.txt", "r+")
-        self.players_writeable = open("players.txt", "a+")
+        self.players_readable = open(self.player_txt_path, "r+")
+        self.players_writeable = open(self.player_txt_path, "a+")
+        self.info_writable = open(self.pleyer_info_path, "a+")
         self.detailed = None
         self.listify()
 
@@ -41,20 +44,26 @@ class VACTracker():
             self.banned = []
 
             for player in range(0, len(filtered_list)):
-                profile = requests.get(SteamID(self.players[player]).community_url)
-                persona_name = profile.text.split("actual_persona_name\">")[1].split("<")[0]
+                steamid = json.loads(request.text)['players'][player]['SteamId']
+                steamid_index = filtered_list.index(steamid)
+                player = filtered_list[steamid_index]
 
-                ban_vac = json.loads(request.text)['players'][player]['VACBanned']
-                days = json.loads(request.text)['players'][player]['DaysSinceLastBan']
-                count_vac = json.loads(request.text)['players'][player]['NumberOfVACBans']
+                url = SteamID(player).community_url
+                profile = requests.get(url).text
+                try: persona_name = profile.split("actual_persona_name\">")[1].split("<")[0]
+                except ValueError: persona_name = "(Failed to get persona name)"
+
+                ban_vac = json.loads(request.text)['players'][steamid_index]['VACBanned']
+                days = json.loads(request.text)['players'][steamid_index]['DaysSinceLastBan']
+                count_vac = json.loads(request.text)['players'][steamid_index]['NumberOfVACBans']
 
                 if self.detailed == True:
-                    if json.loads(request.text)['players'][player]['SteamId'] == str(filtered_list[player]): print(f"Player {persona_name}: banned: {ban_vac}(VAC, Days since last: {days}, Count: {count_vac}) steamid: {json.loads(request.text)['players'][player]['SteamId']}, url: {SteamID(self.players[player]).community_url}")
+                    if json.loads(request.text)['players'][steamid_index]['SteamId'] == player: print(f"Player {persona_name}: banned: {ban_vac}(VAC, Days since last: {days}, Count: {count_vac}) steamid: {steamid}, url: {url}")
                     else: print("mismatch steam id")
 
                 if ban_vac == True:
                     try:
-                        self.banned.append(f"Player {persona_name}, Days since last: {days}, Count: {count_vac} steamid: {json.loads(request.text)['players'][player]['SteamId']}, url: {SteamID(self.players[player]).community_url}")
+                        self.banned.append(f"Player {persona_name}, Days since last: {days}, Count: {count_vac} steamid: {steamid}, url: {url}")
                     except IndexError: pass
             self.detailed = False
             time.sleep(5)
@@ -94,7 +103,8 @@ class VACTracker():
                         try: 
                             index = self.players.index(f"{command[1]}")
                             self.players.pop(index)
-                            players_rewritable = open("players.txt", "w")
+                            print(self.players)
+                            players_rewritable = open(self.player_txt_path, "w")
                             players_rewritable.write(f'{str(self.players).split("[")[1].split("]")[0]},')
                             players_rewritable.close()
                             print("User sucessfully removed, please be patient, it might take a while to refresh the list. Sleeping three seconds to prevent crashes (SteamID)")
@@ -107,7 +117,7 @@ class VACTracker():
                         try:
                             index = self.players.index(steamid)
                             self.players.pop(index)
-                            players_rewritable = open("players.txt", "w")
+                            players_rewritable = open(self.player_txt_path, "w")
                             players_rewritable.write(f'{str(self.players).split("[")[1].split("]")[0]},')
                             players_rewritable.close()
                             print("User sucessfully removed, please be patient, it might take a while to refresh the list. Sleeping three seconds to prevent crashes (Username)")
