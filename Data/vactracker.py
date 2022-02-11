@@ -8,6 +8,7 @@ class VACTracker():
         self.refresh()
 
     def refresh(self):
+
         self.player_txt_path = "Data/Files/players.txt"
         self.pleyer_info_path = "Data/Files/info.json"
         self.banned = []
@@ -31,6 +32,8 @@ class VACTracker():
 
     def checker(self):
         while True:
+            self.refresh()
+
             request = self.makeRequest()
 
             self.request = request
@@ -126,7 +129,7 @@ class VACTracker():
                                 time.sleep(1)
                         except: print("No such user")
                     except: pass
-
+                    
             if command[0] == "ALL":
                 os.system('clear')
                 print("---VACTRACKER SHELL---")
@@ -138,6 +141,7 @@ class VACTracker():
                     ban_vac = json.loads(self.request.text)['players'][player]['VACBanned']
                     ban_com = json.loads(self.request.text)['players'][player]['CommunityBanned']
                     temp_list.append(f"{persona_name}: VAC-{ban_vac}, COM-{ban_com}")
+
                 os.system('clear')
                 print("---VACTRACKER SHELL---")
                 for name in temp_list:
@@ -154,7 +158,5 @@ class VACTracker():
                 print("---VACTRACKER SHELL---")
                 print("Please wait getting detailed info..")
                 self.detailed = True            
-
-
 
 VACTracker = VACTracker()
