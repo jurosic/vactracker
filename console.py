@@ -17,32 +17,37 @@ class Console():
             if inp[0] in self.commands:
                 self.commands[inp[0]](inp[1])
 
+    def rename(self, old, new):
+        try: self.info_json[f"{new}"] = self.info_json.pop(f"{old}")
+        except: 
+            self.info_json[f"{new}"] = "Could not get info"
+            self.info_json.pop(f"{old}")
+
     def INFO(self, steamid):
         os.system('clear')
 
         request = requests.get(f'https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v1/?key=FCC3CCD9F0EF902B6D12A08F7A697E0E&steamids={steamid}')
 
-        info_json = json.loads(request.text)["response"]["players"]["player"][0]
+        self.info_json = json.loads(request.text)["response"]["players"]["player"][0]
 
-        info_json["Persona Name: "] = info_json.pop("personaname")
-        info_json["SteamID: "] = info_json.pop("steamid")
-        info_json["URL: "] = info_json.pop("profileurl")
-        info_json["COuntry Code: "] = info_json.pop("loccountrycode")
-        info_json["Account Status: "] = info_json.pop("personastate")
-        info_json["Profile Visibility: "] = info_json.pop("communityvisibilitystate")
-        info_json["Configured Profile: "] = info_json.pop("profilestate")
-        info_json["Comment Permissions: "] = info_json.pop("commentpermission")
-        info_json["Primary Clan ID: "] = info_json.pop("primaryclanid")
-        info_json["Account Age: "] = info_json.pop("timecreated")
-        
+        self.rename("personaname", "Persona Name: ")
+        self.rename("steamid", "SteamID: ")
+        self.rename("profileurl", "URL: ")
+        self.rename("loccountrycode", "Country Code: ")
+        self.rename("personastate", "Account Status: ")
+        self.rename("communityvisibilitystate", "Profile Visibility: ")
+        self.rename("profilestate", "Configured Profile: ")
+        self.rename("commentpermission", "Comment Permissions: ")
+        self.rename("primaryclanid", "Primary Clan ID: ")
+        self.rename("timecreated", "Account Age: ")
 
-        filename = wget.download(info_json["avatar"], bar=None)
+        filename = wget.download(self.info_json["avatar"], bar=None)
 
         player_info = []
-        for info in info_json:
+        for info in self.info_json:
             if info == 'avatar' or info == 'avatarmedium' or info == 'avatarfull' or info == 'avatarhash' or info == 'personastateflags': 
                 continue
-            player_info.append((info, info_json[info]))
+            player_info.append((info, self.info_json[info]))
 
         img = climage.convert(filename).split("\n")
         temp = []
