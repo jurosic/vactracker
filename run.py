@@ -1,3 +1,5 @@
-from console import Console
+from Data.console import Console
+from Data.core import Core
 
-Console.console()
+Core()
+Console()
