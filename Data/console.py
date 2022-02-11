@@ -25,7 +25,7 @@ class Console():
 
             if inp[0] in self.commands:
                 try: 
-                    trash = inp[1]
+                    inp[1]
                     self.commands[inp[0]](inp[1])
                 except IndexError:
                     self.commands[inp[0]]()
@@ -52,13 +52,10 @@ class Console():
                 player_file = open(f"Data/Info/{filename}").read()
                 player_json = json.loads(player_file)
                 player_id = player_json["SteamID: "]
-                print(steamid)
-                print(player_json["SteamID: "])
-                if player_id == steamid:
+                if int(player_id) == int(steamid):
                     os.remove(f"Data/Info/{player_json['Persona Name: ']}.json")
                 else: players_file.write(f"{player_id},")
             players_file.close()
-            print("closed")
 
     def ALL(self):
         os.system("clear")
@@ -77,6 +74,10 @@ class Console():
                     player_file = open(f"Data/Info/{filename}").read()
                     player_json = json.loads(player_file)
                     players_file.write(f"{player_json['SteamID: ']},")
+        
+        os.system("clear")
+        print("-----VACTRACKER SHELL-----")
+        print("Rebased!")
 
     def INFO(self, name):
         os.system('clear')
