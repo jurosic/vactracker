@@ -47,11 +47,18 @@ class Console():
         try: int(steamid)
         except: steamid = SteamID.from_url(f'https://steamcommunity.com/id/{steamid}')
 
-        with open("Data/players.txt", "r") as players_file_old:
-            players_file_new = open("Data/players.txt", "w")
-            for line in players_file_old:
-                line.replace(f"{steamid},", "")
-                players_file_new.write(line)
+        with open("Data/players.txt", "w") as players_file:
+            for filename in os.listdir("Data/Info/"):
+                player_file = open(f"Data/Info/{filename}").read()
+                player_json = json.loads(player_file)
+                player_id = player_json["SteamID: "]
+                print(steamid)
+                print(player_json["SteamID: "])
+                if player_id == steamid:
+                    os.remove(f"Data/Info/{player_json['Persona Name: ']}.json")
+                else: players_file.write(f"{player_id},")
+            players_file.close()
+            print("closed")
 
     def ALL(self):
         os.system("clear")
@@ -59,6 +66,17 @@ class Console():
         for filename in os.listdir("Data/Info/"):
             file = open(f"Data/Info/{filename}", "r").read()
             print(json.loads(file)["Persona Name: "])
+
+    def REBASE(self):
+        os.system("clear")
+        print("-----VACTRACKER SHELL-----")
+        print("Rebasing...")
+
+        with open("Data/players.txt", "w") as players_file:
+            for filename in os.listdir("Data/Info/"):
+                    player_file = open(f"Data/Info/{filename}").read()
+                    player_json = json.loads(player_file)
+                    players_file.write(f"{player_json['SteamID: ']},")
 
     def INFO(self, name):
         os.system('clear')

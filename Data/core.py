@@ -7,7 +7,7 @@ class Core():
             players_file = open("Data/players.txt", "r").read()
             for player in players_file.split(","):
                 self.fetchInfo(player)
-            time.sleep(3)
+            time.sleep(10)
 
     def rename(self, old, new):
         try: self.info_json[f"{new}"] = self.info_json.pop(f"{old}")
