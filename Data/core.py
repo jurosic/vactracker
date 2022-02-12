@@ -1,5 +1,5 @@
 from urllib.error import HTTPError
-import requests, json, time, threading
+import requests, json, time, threading, time
 
 class Core():
 
@@ -18,7 +18,7 @@ class Core():
                     else:
                         self.fetchInfo(player)
                 time.sleep(10)
-            except: 
+            except FileNotFoundError: 
                 print("Players file could not be found please run REBASE")
                 time.sleep(2)
 
@@ -26,6 +26,10 @@ class Core():
         if type == "info":
             try: self.info_json[f"{new}"] = self.info_json.pop(f"{old}")
             except KeyError: self.info_json[f"{new}"] = "Could not get info"
+        elif type == "time":
+            try: self.info_json[f"{new}"] = time.strftime("%d.%m %Y", time.localtime(self.info_json.pop(f"{old}")))
+            except KeyError: self.info_json[f"{new}"] = "Could not get info"
+            
         elif type == "ban":
             try: self.info_json[f"{new}"] = self.ban_json.pop(f"{old}")
             except KeyError: self.ban_json[f"{new}"] = "Could not get info"
@@ -57,8 +61,8 @@ class Core():
             self.rename("profilestate", "Configured Profile: ", "info")
             self.rename("commentpermission", "Comment Permissions: ", "info")
             self.rename("primaryclanid", "Primary Clan ID: ", "info")
-            self.rename("timecreated", "Account Age: ", "info")
-            self.rename("lastlogoff", "Last Logoff: ", "info")
+            self.rename("timecreated", "Account Age: ", "time")
+            self.rename("lastlogoff", "Last Logoff: ", "time")
 
             filename = self.info_json['Persona Name: '].replace(".", "_").replace(" ", "_")
             
