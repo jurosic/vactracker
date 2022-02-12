@@ -82,16 +82,18 @@ class Console():
             else:
                 basic_request = requests.get(f'https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v1/?key={self.key}&steamids={player}')
                 name = json.loads(basic_request.text)['response']['players']['player'][0]['personaname']
-                vac = json.loads(open(f"Data/Info/{name.replace('.', '_').replace(' ', '_')}.json", "r").read())['VAC Banned: ']
-                if vac: vac = f"\x1b[31m{vac}\x1b[m" 
-                else: vac = f"\x1b[32m{vac}\x1b[m"
-                com = json.loads(open(f"Data/Info/{name.replace('.', '_').replace(' ', '_')}.json", "r").read())['Community Banned: ']
-                if com: com = f"\x1b[31m{com}\x1b[m" 
-                else: com = f"\x1b[32m{com}\x1b[m"
-                game = json.loads(open(f"Data/Info/{name.replace('.', '_').replace(' ', '_')}.json", "r").read())['Number Of Game Bans: ']
-                if game > 3: game = f"\x1b[31m{game}\x1b[0m"
-                elif game >= 1: game = f"\x1b[33m{game}\x1b[0m"
-                else: game = f"\x1b[32m{game}\x1b[0m"
+                try:
+                    vac = json.loads(open(f"Data/Info/{name.replace('.', '_').replace(' ', '_')}.json", "r").read())['VAC Banned: ']
+                    if vac: vac = f"\x1b[31m{vac}\x1b[m" 
+                    else: vac = f"\x1b[32m{vac}\x1b[m"
+                    com = json.loads(open(f"Data/Info/{name.replace('.', '_').replace(' ', '_')}.json", "r").read())['Community Banned: ']
+                    if com: com = f"\x1b[31m{com}\x1b[m" 
+                    else: com = f"\x1b[32m{com}\x1b[m"
+                    game = json.loads(open(f"Data/Info/{name.replace('.', '_').replace(' ', '_')}.json", "r").read())['Number Of Game Bans: ']
+                    if game > 3: game = f"\x1b[31m{game}\x1b[0m"
+                    elif game >= 1: game = f"\x1b[33m{game}\x1b[0m"
+                    else: game = f"\x1b[32m{game}\x1b[0m"
+                except: print(f"No data yet for {name}")
                 print(f"{json.loads(basic_request.text)['response']['players']['player'][0]['personaname']}, VAC-{vac} COM-{com} GAME-{game}")  
 
     def REBASE(self):
@@ -119,7 +121,7 @@ class Console():
 
             player_info = []
             for info in self.info_json:
-                if info == 'avatar' or info == 'avatarmedium' or info == 'avatarfull' or info == 'avatarhash' or info == 'personastateflags': 
+                if info == 'avatar' or info == 'avatarmedium' or info == 'avatarfull' or info == 'avatarhash' or info == 'personastateflags' or info == 'gameid': 
                     continue
                 player_info.append((info, self.info_json[info]))
 

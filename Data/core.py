@@ -9,7 +9,9 @@ class Core():
             exit()
 
         while True:
-            players_file = open("Data/players.txt", "r").read()
+            try:
+                players_file = open("Data/players.txt", "r").read()
+            except: print("Players file could not be found please run REBASE")
             for player in players_file.split(","):
                 if player == "":
                     pass
@@ -26,11 +28,11 @@ class Core():
             except KeyError: self.ban_json[f"{new}"] = "Could not get info"
 
     def fetchInfo(self, steamid):
-
-        basic_request = requests.get(f'https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v1/?key={self.key}&steamids={steamid}')
-        ban_request = requests.get(f'https://api.steampowered.com/ISteamUser/GetPlayerBans/v1/?key={self.key}&steamids={steamid}')
-
         try:
+
+            basic_request = requests.get(f'https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v1/?key={self.key}&steamids={steamid}')
+            ban_request = requests.get(f'https://api.steampowered.com/ISteamUser/GetPlayerBans/v1/?key={self.key}&steamids={steamid}')
+
             basic_request.raise_for_status()
             ban_request.raise_for_status()
 
@@ -43,8 +45,9 @@ class Core():
             self.rename("profileurl", "URL: ", "info")
             self.rename("VACBanned", "VAC Banned: ", "ban")
             self.rename("CommunityBanned", "Community Banned: ", "ban")
-            self.rename("NumberOfGameBans", "Number Of Game Bans: ", "ban")
+            self.rename("NumberOfGameBans", "Number of Game Bans: ", "ban")
             self.rename("DaysSinceLastBan", "Days Since Last Ban: ", "ban")
+            self.rename("gameextrainfo", "Currently in Game: ", "info")
             self.rename("loccountrycode", "Country Code: ", "info")
             self.rename("personastate", "Account Status: ", "info")
             self.rename("communityvisibilitystate", "Profile Visibility: ", "info")
