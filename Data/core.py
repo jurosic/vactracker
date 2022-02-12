@@ -1,3 +1,4 @@
+from urllib.error import HTTPError
 import requests, json, time, threading
 
 class Core():
@@ -9,13 +10,17 @@ class Core():
             exit()
 
         while True:
-            players_file = open("Data/players.txt", "r").read()
-            for player in players_file.split(","):
-                if player == "":
-                    pass
-                else:
-                    self.fetchInfo(player)
-            time.sleep(10)
+            try:
+                players_file = open("Data/players.txt", "r").read()
+                for player in players_file.split(","):
+                    if player == "":
+                        pass
+                    else:
+                        self.fetchInfo(player)
+                time.sleep(10)
+            except: 
+                print("Players file could not be found please run REBASE")
+                time.sleep(2)
 
     def rename(self, old, new, type):
         if type == "info":
@@ -26,34 +31,41 @@ class Core():
             except KeyError: self.ban_json[f"{new}"] = "Could not get info"
 
     def fetchInfo(self, steamid):
+        try:
 
-        basic_request = requests.get(f'https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v1/?key={self.key}&steamids={steamid}')
-        ban_request = requests.get(f'https://api.steampowered.com/ISteamUser/GetPlayerBans/v1/?key={self.key}&steamids={steamid}')
+            basic_request = requests.get(f'https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v1/?key={self.key}&steamids={steamid}')
+            ban_request = requests.get(f'https://api.steampowered.com/ISteamUser/GetPlayerBans/v1/?key={self.key}&steamids={steamid}')
 
-        self.info_json = json.loads(basic_request.text)["response"]["players"]["player"][0]
-        self.ban_json = json.loads(ban_request.text)["players"][0]
+            basic_request.raise_for_status()
+            ban_request.raise_for_status()
 
-        self.rename("personaname", "Persona Name: ", "info")
-        self.rename("realname", "Real Name: ", "info")
-        self.rename("steamid", "SteamID: ", "info")
-        self.rename("profileurl", "URL: ", "info")
-        self.rename("VACBanned", "VAC Banned: ", "ban")
-        self.rename("CommunityBanned", "Community Banned: ", "ban")
-        self.rename("NumberOfGameBans", "Number Of Game Bans: ", "ban")
-        self.rename("DaysSinceLastBan", "Days Since Last Ban: ", "ban")
-        self.rename("loccountrycode", "Country Code: ", "info")
-        self.rename("personastate", "Account Status: ", "info")
-        self.rename("communityvisibilitystate", "Profile Visibility: ", "info")
-        self.rename("profilestate", "Configured Profile: ", "info")
-        self.rename("commentpermission", "Comment Permissions: ", "info")
-        self.rename("primaryclanid", "Primary Clan ID: ", "info")
-        self.rename("timecreated", "Account Age: ", "info")
-        self.rename("lastlogoff", "Last Logoff: ", "info")
+            self.info_json = json.loads(basic_request.text)["response"]["players"]["player"][0]
+            self.ban_json = json.loads(ban_request.text)["players"][0]
 
-        filename = self.info_json['Persona Name: '].replace(".", "_").replace(" ", "_")
-        
-        with open(fr"Data/Info/{filename}.json", 'w') as outfile:
-            json.dump(self.info_json, outfile)
+            self.rename("personaname", "Persona Name: ", "info")
+            self.rename("realname", "Real Name: ", "info")
+            self.rename("steamid", "SteamID: ", "info")
+            self.rename("profileurl", "URL: ", "info")
+            self.rename("VACBanned", "VAC Banned: ", "ban")
+            self.rename("CommunityBanned", "Community Banned: ", "ban")
+            self.rename("NumberOfGameBans", "Number of Game Bans: ", "ban")
+            self.rename("DaysSinceLastBan", "Days Since Last Ban: ", "ban")
+            self.rename("gameextrainfo", "Currently in Game: ", "info")
+            self.rename("loccountrycode", "Country Code: ", "info")
+            self.rename("personastate", "Account Status: ", "info")
+            self.rename("communityvisibilitystate", "Profile Visibility: ", "info")
+            self.rename("profilestate", "Configured Profile: ", "info")
+            self.rename("commentpermission", "Comment Permissions: ", "info")
+            self.rename("primaryclanid", "Primary Clan ID: ", "info")
+            self.rename("timecreated", "Account Age: ", "info")
+            self.rename("lastlogoff", "Last Logoff: ", "info")
+
+            filename = self.info_json['Persona Name: '].replace(".", "_").replace(" ", "_")
+            
+            with open(fr"Data/Info/{filename}.json", 'w') as outfile:
+                json.dump(self.info_json, outfile)
+        except HTTPError: 
+            print("steam api did not respond, skipping..")
 
 core_thread = threading.Thread(target=Core)
 core_thread.start()
