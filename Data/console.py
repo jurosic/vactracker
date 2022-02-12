@@ -1,4 +1,4 @@
-import climage, json, wget, os, threading
+import climage, json, wget, os, threading, requests
 from steam.steamid import SteamID
 
 class Console():
@@ -15,6 +15,7 @@ class Console():
             "REMOVE": self.REMOVE,
             "ADD": self.ADD,
             "ALL": self.ALL,
+            "REBASE": self.REBASE,
             "INFO": self.INFO
 
         }
@@ -60,9 +61,15 @@ class Console():
     def ALL(self):
         os.system("clear")
         print("-----VACTRACKER SHELL-----")
+        print("JSON:")
         for filename in os.listdir("Data/Info/"):
             file = open(f"Data/Info/{filename}", "r").read()
             print(json.loads(file)["Persona Name: "])
+        print("TXT:")
+        for player in open(f"Data/players.txt").read().split(","):
+            basic_request = requests.get(f'https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v1/?key=FCC3CCD9F0EF902B6D12A08F7A697E0E&steamids={player}')
+            try: print(json.loads(basic_request.text)["response"]["players"]["player"][0]["personaname"])  
+            except TypeError: pass
 
     def REBASE(self):
         os.system("clear")
