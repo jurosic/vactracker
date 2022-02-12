@@ -3,6 +3,11 @@ import requests, json, time, threading
 class Core():
 
     def __init__(self):
+        self.key = open("Data/key.txt", "r").read()
+        if self.key == "":
+            print("Please add your key in the key.txt file") 
+            exit()
+
         while True:
             players_file = open("Data/players.txt", "r").read()
             for player in players_file.split(","):
@@ -22,8 +27,8 @@ class Core():
 
     def fetchInfo(self, steamid):
 
-        basic_request = requests.get(f'https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v1/?key=FCC3CCD9F0EF902B6D12A08F7A697E0E&steamids={steamid}')
-        ban_request = requests.get(f'https://api.steampowered.com/ISteamUser/GetPlayerBans/v1/?key=FCC3CCD9F0EF902B6D12A08F7A697E0E&steamids={steamid}')
+        basic_request = requests.get(f'https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v1/?key={self.key}&steamids={steamid}')
+        ban_request = requests.get(f'https://api.steampowered.com/ISteamUser/GetPlayerBans/v1/?key={self.key}&steamids={steamid}')
 
         self.info_json = json.loads(basic_request.text)["response"]["players"]["player"][0]
         self.ban_json = json.loads(ban_request.text)["players"][0]

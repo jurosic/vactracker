@@ -10,6 +10,10 @@ class Console():
         console_thread = threading.Thread(target=self.console)
         console_thread.start()
 
+        self.key = open("Data/key.txt", "r").read()
+        if self.key == "":
+            print("Please add your key in the key.txt file") 
+            exit()
         self.commands = {
 
             "REMOVE": self.REMOVE,
@@ -76,7 +80,7 @@ class Console():
         for player in open(f"Data/players.txt").read().split(","):
             if player == "": pass
             else:
-                basic_request = requests.get(f'https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v1/?key=FCC3CCD9F0EF902B6D12A08F7A697E0E&steamids={player}')
+                basic_request = requests.get(f'https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v1/?key={self.key}&steamids={player}')
                 name = json.loads(basic_request.text)['response']['players']['player'][0]['personaname']
                 vac = json.loads(open(f"Data/Info/{name.replace('.', '_').replace(' ', '_')}.json", "r").read())['VAC Banned: ']
                 if vac: vac = f"\x1b[31m{vac}\x1b[m" 
