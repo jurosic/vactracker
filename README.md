@@ -8,4 +8,4 @@ COMMANDS: ADD [custom account id/steamid of account] (Adds account)
           ALL (Lists persona name of every account in the players.txt file, and names of all .json files, also lists VAC, COM and GAME bans)
 ```
 
-TODO: ~~Save info about player from time of add~~, make a "notification" system, trace changes of accounts, make gui more lively, ~~add a detailed view~~, notify of wrong command, fix random crashes, oh yeah, and make it FUCKING CLEANER, ~~make a better refreshing function because banned list is sometimes empty~~, store what id the user was added with, fix error messages after KeyboardInterrupt
+TODO: ~~Save info about player from time of add~~, make a "notification" system, trace changes of accounts, make gui more lively, ~~add a detailed view~~, notify of wrong command, fix random crashes, oh yeah, and make it FUCKING CLEANER, ~~make a better refreshing function because banned list is sometimes empty~~, store what id the user was added with, fix error messages after KeyboardInterrupt, get friends list
