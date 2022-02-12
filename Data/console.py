@@ -29,7 +29,8 @@ class Console():
                     inp[1]
                     self.commands[inp[0]](inp[1])
                 except IndexError:
-                    self.commands[inp[0]]()
+                    try: self.commands[inp[0]]()
+                    except TypeError: print("INFO must be followed by the name of a .json file")
 
     def rename(self, old, new):
         try: self.info_json[f"{new}"] = self.info_json.pop(f"{old}")
@@ -73,9 +74,21 @@ class Console():
             print(f"{filename}; \x1b[30;5mPersona: {json.loads(file)['Persona Name: ']}\x1b[m")
         print("TXT:")
         for player in open(f"Data/players.txt").read().split(","):
-            basic_request = requests.get(f'https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v1/?key=FCC3CCD9F0EF902B6D12A08F7A697E0E&steamids={player}')
-            try: print(json.loads(basic_request.text)["response"]["players"]["player"][0]["personaname"])  
-            except TypeError: pass
+            if player == "": pass
+            else:
+                basic_request = requests.get(f'https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v1/?key=FCC3CCD9F0EF902B6D12A08F7A697E0E&steamids={player}')
+                name = json.loads(basic_request.text)['response']['players']['player'][0]['personaname']
+                vac = json.loads(open(f"Data/Info/{name.replace('.', '_').replace(' ', '_')}.json", "r").read())['VAC Banned: ']
+                if vac: vac = f"\x1b[31m{vac}\x1b[m" 
+                else: vac = f"\x1b[32m{vac}\x1b[m"
+                com = json.loads(open(f"Data/Info/{name.replace('.', '_').replace(' ', '_')}.json", "r").read())['Community Banned: ']
+                if com: com = f"\x1b[31m{com}\x1b[m" 
+                else: com = f"\x1b[32m{com}\x1b[m"
+                game = json.loads(open(f"Data/Info/{name.replace('.', '_').replace(' ', '_')}.json", "r").read())['Number Of Game Bans: ']
+                if game > 3: game = f"\x1b[31m{game}\x1b[0m"
+                elif game >= 1: game = f"\x1b[33m{game}\x1b[0m"
+                else: game = f"\x1b[32m{game}\x1b[0m"
+                print(f"{json.loads(basic_request.text)['response']['players']['player'][0]['personaname']}, VAC-{vac} COM-{com} GAME-{game}")  
 
     def REBASE(self):
         os.system("clear")
