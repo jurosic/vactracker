@@ -36,13 +36,19 @@ class Console():
         except KeyError: self.info_json[f"{new}"] = "Could not get info"
 
     def ADD(self, steamid):
-        try: int(steamid)
-        except: steamid = SteamID.from_url(f'https://steamcommunity.com/id/{steamid}')
+        try: 
+            int(steamid)
+            method = "(SteamID)"
+        except:
+            steamid = SteamID.from_url(f'https://steamcommunity.com/id/{steamid}')
+            method = "(CustomID)"
 
         with open("Data/players.txt", "a+") as players_file:
-            players_file.write(f"{steamid},")
-        
-        print("Player successfully added to tracklist.")
+            if str(steamid) in open("Data/players.txt", "r").read().split(","):
+                print("This player is already in your list.")
+            else:
+                players_file.write(f"{steamid},")
+                print(f"Player successfully added to tracklist. {method}")
 
     def REMOVE(self, steamid):
         try: int(steamid)
@@ -64,7 +70,7 @@ class Console():
         print("JSON:")
         for filename in os.listdir("Data/Info/"):
             file = open(f"Data/Info/{filename}", "r").read()
-            print(json.loads(file)["Persona Name: "])
+            print(f"{filename}; \x1b[30;5mPersona: {json.loads(file)['Persona Name: ']}\x1b[m")
         print("TXT:")
         for player in open(f"Data/players.txt").read().split(","):
             basic_request = requests.get(f'https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v1/?key=FCC3CCD9F0EF902B6D12A08F7A697E0E&steamids={player}')
