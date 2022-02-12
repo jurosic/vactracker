@@ -6,7 +6,7 @@ COMMANDS: ADD [custom account id/steamid of account] (Adds account)
           REBASE (Takes appids from every .json file and replaces the players.txt with them)
           INFO [name of .json file] (Shows detailed info about the account of which the .json file was selected)
           ALL (Lists persona name of every account in the players.txt file, and names of all .json files, also lists VAC, COM and GAME bans)
-<pre?>
+<pre>
 
 
 TODO: ~~Save info about player from time of add~~, make a "notification" system, trace renames of accounts, make gui more lively, ~~add a detailed view~~, notify of wrong command, fix random crashes, oh yeah, and make it FUCKING CLEANER, ~~make a better refreshing function because banned list is sometimes empty~~
