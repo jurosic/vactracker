@@ -64,9 +64,11 @@ class Console():
                 player_file = open(f"Data/Info/{filename}").read()
                 player_json = json.loads(player_file)
                 player_id = player_json["SteamID: "]
-                if int(player_id) == int(steamid):
-                    os.remove(f"Data/Info/{player_json['Persona Name: ']}.json")
-                else: players_file.write(f"{player_id},")
+                try:
+                    if int(player_id) == int(steamid):
+                        os.remove(f"Data/Info/{player_json['Persona Name: ']}.json")
+                    else: players_file.write(f"{player_id},")
+                except TypeError: print("That account does not exist, please use steamid"); continue
             players_file.close()
 
     def ALL(self):
@@ -76,23 +78,30 @@ class Console():
         for filename in os.listdir("Data/Info/"):
             file = open(f"Data/Info/{filename}", "r").read()
             print(f"{filename}; \x1b[30;5mPersona: {json.loads(file)['Persona Name: ']}\x1b[m")
-        print("TXT:")
+        print("TXT: (might take a bit)")
         for player in open(f"Data/players.txt").read().split(","):
             if player == "": pass
             else:
                 basic_request = requests.get(f'https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v1/?key={self.key}&steamids={player}')
                 name = json.loads(basic_request.text)['response']['players']['player'][0]['personaname']
-                vac = json.loads(open(f"Data/Info/{name.replace('.', '_').replace(' ', '_')}.json", "r").read())['VAC Banned: ']
-                if vac: vac = f"\x1b[31m{vac}\x1b[m" 
-                else: vac = f"\x1b[32m{vac}\x1b[m"
-                com = json.loads(open(f"Data/Info/{name.replace('.', '_').replace(' ', '_')}.json", "r").read())['Community Banned: ']
-                if com: com = f"\x1b[31m{com}\x1b[m" 
-                else: com = f"\x1b[32m{com}\x1b[m"
-                game = json.loads(open(f"Data/Info/{name.replace('.', '_').replace(' ', '_')}.json", "r").read())['Number Of Game Bans: ']
-                if game > 3: game = f"\x1b[31m{game}\x1b[0m"
-                elif game >= 1: game = f"\x1b[33m{game}\x1b[0m"
-                else: game = f"\x1b[32m{game}\x1b[0m"
-                print(f"{json.loads(basic_request.text)['response']['players']['player'][0]['personaname']}, VAC-{vac} COM-{com} GAME-{game}")  
+                try:
+                    info = open(f"Data/Info/{name.replace('.', '_').replace(' ', '_')}.json", "r").read()
+                    vac = json.loads(info)['VAC Banned: ']
+                    if vac: vac = f"\x1b[31m{vac}\x1b[m" 
+                    else: vac = f"\x1b[32m{vac}\x1b[m"
+                    com = json.loads(info)['Community Banned: ']
+                    if com: com = f"\x1b[31m{com}\x1b[m" 
+                    else: com = f"\x1b[32m{com}\x1b[m"
+                    game = json.loads(info)['Number of Game Bans: ']
+                    if game > 3: game = f"\x1b[31m{game}\x1b[0m"
+                    elif game >= 1: game = f"\x1b[33m{game}\x1b[0m"
+                    else: game = f"\x1b[32m{game}\x1b[0m"
+                    ingame = json.loads(info)['Currently in Game: ']
+                    if ingame == "Could not get info": ingame = "\x1b[35m0\x1b[m"
+                    else: ingame = "\x1b[34m1\x1b[m"
+                    print(f"{name}, VAC-{vac} COM-{com} GAME-{game} INGAME-{ingame}")  
+                except: print(f"No data yet for {name}") 
+               
 
     def REBASE(self):
         os.system("clear")
@@ -119,7 +128,7 @@ class Console():
 
             player_info = []
             for info in self.info_json:
-                if info == 'avatar' or info == 'avatarmedium' or info == 'avatarfull' or info == 'avatarhash' or info == 'personastateflags': 
+                if info == 'avatar' or info == 'avatarmedium' or info == 'avatarfull' or info == 'avatarhash' or info == 'personastateflags' or info == 'gameid': 
                     continue
                 player_info.append((info, self.info_json[info]))
 
