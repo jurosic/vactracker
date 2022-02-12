@@ -74,11 +74,11 @@ class Console():
     def ALL(self):
         os.system("clear")
         print("-----VACTRACKER SHELL-----")
-        print("JSON:")
+        print("\x1b[37m\x1b[1mJSON:\x1b[m")
         for filename in os.listdir("Data/Info/"):
             file = open(f"Data/Info/{filename}", "r").read()
             print(f"{filename}; \x1b[30;5mPersona: {json.loads(file)['Persona Name: ']}\x1b[m")
-        print("TXT: (might take a bit)")
+        print("\n\x1b[37m\x1b[1mTXT:\x1b[m (might take a bit)")
         for player in open(f"Data/players.txt").read().split(","):
             if player == "": pass
             else:
@@ -99,8 +99,10 @@ class Console():
                     ingame = json.loads(info)['Currently in Game: ']
                     if ingame == "Could not get info": ingame = "\x1b[35m0\x1b[m"
                     else: ingame = "\x1b[34m1\x1b[m"
-                    print(f"{name}, VAC-{vac} COM-{com} GAME-{game} INGAME-{ingame}")  
+                    online = json.loads(info)['Account Status: ']
+                    print(f"{name}, VAC-{vac} COM-{com} GAME-{game} INGAME-{ingame} STATUS-{online}")  
                 except: print(f"No data yet for {name}") 
+        print("\n\x1b[37m\x1b[1mCHEAT SHEET:\x1b[m\nSTATUS: 0-OFF 1-ON 2-BUSY 3-AWAY 4-SNOOZE 5-LTT 6-LTP")
                
 
     def REBASE(self):
