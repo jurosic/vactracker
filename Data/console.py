@@ -74,7 +74,7 @@ class Console():
     def ALL(self):
         os.system("clear")
         print("-----VACTRACKER SHELL-----")
-        
+
         print("\x1b[37m\x1b[1mJSON:\x1b[m")
         for filename in os.listdir("Data/Info/"):
             file = open(f"Data/Info/{filename}", "r").read()
@@ -110,7 +110,7 @@ class Console():
                     print(f"{name}, VAC-{vac} COM-{com} GAME-{game} INGAME-{ingame} STATUS-{online}")  
 
                 except json.decoder.JSONDecodeError: print("Failed to read from response, please try again")
-                except FileNotFoundError: print("f"No data yet for {name}"")
+                except FileNotFoundError: print(f"No data yet for {name}")
 
         print("\n\x1b[37m\x1b[1mCHEAT SHEET:\x1b[m\nSTATUS: 0-OFF 1-ON 2-BUSY 3-AWAY 4-SNOOZE 5-LTT 6-LTP")
                
