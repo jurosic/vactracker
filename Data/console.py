@@ -14,7 +14,7 @@ class Console():
             print("Exiting..")
             exit()
 
-        self.key = open("Data/key.txt", "r").read()
+        self.key = open("Data/key.txt", "r").readline(32)
         if self.key == "":
             print("Please add your key in the key.txt file") 
             exit()
@@ -113,7 +113,7 @@ class Console():
 
                     print(f"{name}, VAC-{vac} COM-{com} GAME-{game} INGAME-{ingame} STATUS-{online}")  
 
-                except json.decoder.JSONDecodeError: print("Failed to read from response, please try again")
+                except json.decoder.JSONDecodeError: print("Failed to read from response, please try again, check your key is correct")
                 except FileNotFoundError: print(f"No data yet for {name}")
 
         print("\n\x1b[37m\x1b[1mCHEAT SHEET:\x1b[m\nSTATUS: 0-OFF 1-ON 2-BUSY 3-AWAY 4-SNOOZE 5-LTT 6-LTP")
