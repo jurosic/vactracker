@@ -7,8 +7,12 @@ class Console():
         os.system('clear')
         print("-----VACTRACKER SHELL-----")
 
-        console_thread = threading.Thread(target=self.console)
-        console_thread.start()
+        try:
+            console_thread = threading.Thread(target=self.console)
+            console_thread.start()
+        except KeyboardInterrupt: 
+            print("Exiting..")
+            exit()
 
         self.key = open("Data/key.txt", "r").read()
         if self.key == "":

@@ -22,7 +22,9 @@ class Core():
             except FileNotFoundError: 
                 print("Players file could not be found please run REBASE")
                 time.sleep(2)
-            except KeyboardInterrupt: print("Exiting..")
+            except KeyboardInterrupt: 
+                print("Exiting..")
+                exit()
 
     def rename(self, old, new, type):
         if type == "info":
