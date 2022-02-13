@@ -74,34 +74,44 @@ class Console():
     def ALL(self):
         os.system("clear")
         print("-----VACTRACKER SHELL-----")
+        
         print("\x1b[37m\x1b[1mJSON:\x1b[m")
         for filename in os.listdir("Data/Info/"):
             file = open(f"Data/Info/{filename}", "r").read()
             print(f"{filename}; \x1b[30;5mPersona: {json.loads(file)['Persona Name: ']}\x1b[m")
+
         print("\n\x1b[37m\x1b[1mTXT:\x1b[m (might take a bit)")
         for player in open(f"Data/players.txt").read().split(","):
             if player == "": pass
             else:
-                basic_request = requests.get(f'https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v1/?key={self.key}&steamids={player}')
-                name = json.loads(basic_request.text)['response']['players']['player'][0]['personaname']
                 try:
+                    basic_request = requests.get(f'https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v1/?key={self.key}&steamids={player}')
+                    name = json.loads(basic_request.text)['response']['players']['player'][0]['personaname']
                     info = open(f"Data/Info/{name.replace('.', '_').replace(' ', '_')}.json", "r").read()
+
                     vac = json.loads(info)['VAC Banned: ']
                     if vac: vac = f"\x1b[31m{vac}\x1b[m" 
                     else: vac = f"\x1b[32m{vac}\x1b[m"
+
                     com = json.loads(info)['Community Banned: ']
                     if com: com = f"\x1b[31m{com}\x1b[m" 
                     else: com = f"\x1b[32m{com}\x1b[m"
+
                     game = json.loads(info)['Number of Game Bans: ']
                     if game > 3: game = f"\x1b[31m{game}\x1b[0m"
                     elif game >= 1: game = f"\x1b[33m{game}\x1b[0m"
                     else: game = f"\x1b[32m{game}\x1b[0m"
+
                     ingame = json.loads(info)['Currently in Game: ']
                     if ingame == "Could not get info": ingame = "\x1b[35m0\x1b[m"
                     else: ingame = "\x1b[34m1\x1b[m"
                     online = json.loads(info)['Account Status: ']
+
                     print(f"{name}, VAC-{vac} COM-{com} GAME-{game} INGAME-{ingame} STATUS-{online}")  
-                except: print(f"No data yet for {name}") 
+
+                except json.decoder.JSONDecodeError: print("Failed to read from response, please try again")
+                except FileNotFoundError: print("f"No data yet for {name}"")
+
         print("\n\x1b[37m\x1b[1mCHEAT SHEET:\x1b[m\nSTATUS: 0-OFF 1-ON 2-BUSY 3-AWAY 4-SNOOZE 5-LTT 6-LTP")
                
 

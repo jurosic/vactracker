@@ -1,9 +1,11 @@
-import requests, json, time, threading, time
+import requests, json, time, threading, time, os
 
 class Core():
 
     def __init__(self):
-        self.key = open("Data/key.txt", "r").read()
+        self.key = open("Data/key.txt", "r").readline(32)
+        try: os.mkdir("Data/Info")
+        except FileExistsError: pass
         if self.key == "":
             print("Please add your key in the key.txt file") 
             exit()
@@ -20,6 +22,7 @@ class Core():
             except FileNotFoundError: 
                 print("Players file could not be found please run REBASE")
                 time.sleep(2)
+            except KeyboardInterrupt: print("Exiting..")
 
     def rename(self, old, new, type):
         if type == "info":
