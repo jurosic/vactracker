@@ -1,4 +1,6 @@
 import climage, json, wget, os, threading, requests
+from termgraph import termgraph as tg
+from datetime import datetime
 from steam.steamid import SteamID
 
 class Console():
@@ -81,9 +83,10 @@ class Console():
 
         print("\x1b[37m\x1b[1mJSON:\x1b[m")
         for filename in os.listdir("Data/Info/"):
-            file = open(f"Data/Info/{filename}", "r").read()
-            print(f"{filename}; \x1b[30;5mPersona: {json.loads(file)['Persona Name: ']}\x1b[m")
-
+            try: 
+                file = open(f"Data/Info/{filename}", "r").read()
+                print(f"{filename}; \x1b[30;5mPersona: {json.loads(file)['Persona Name: ']}\x1b[m")
+            except IsADirectoryError: pass
         print("\n\x1b[37m\x1b[1mTXT:\x1b[m (might take a bit)")
         for player in open(f"Data/players.txt").read().split(","):
             if player == "": pass
@@ -93,27 +96,27 @@ class Console():
                     name = json.loads(basic_request.text)['response']['players']['player'][0]['personaname']
                     info = open(f"Data/Info/{name.replace('.', '_').replace(' ', '_')}.json", "r").read()
 
-                    vac = json.loads(info)['VAC Banned: ']
+                    vac = json.loads(info)['VAC Banned: '][0]
                     if vac: vac = f"\x1b[31m{vac}\x1b[m" 
                     else: vac = f"\x1b[32m{vac}\x1b[m"
 
-                    com = json.loads(info)['Community Banned: ']
+                    com = json.loads(info)['Community Banned: '][0]
                     if com: com = f"\x1b[31m{com}\x1b[m" 
                     else: com = f"\x1b[32m{com}\x1b[m"
 
-                    game = json.loads(info)['Number of Game Bans: ']
+                    game = json.loads(info)['Number of Game Bans: '][0]
                     if game > 3: game = f"\x1b[31m{game}\x1b[0m"
                     elif game >= 1: game = f"\x1b[33m{game}\x1b[0m"
                     else: game = f"\x1b[32m{game}\x1b[0m"
 
-                    ingame = json.loads(info)['Currently in Game: ']
+                    ingame = json.loads(info)['Currently in Game: '][0]
                     if ingame == "Could not get info": ingame = "\x1b[35m0\x1b[m"
                     else: ingame = "\x1b[34m1\x1b[m"
-                    online = json.loads(info)['Account Status: ']
+                    online = json.loads(info)['Account Status: '][0]
 
                     print(f"{name}, VAC-{vac} COM-{com} GAME-{game} INGAME-{ingame} STATUS-{online}")  
 
-                except json.decoder.JSONDecodeError: print("Failed to read from response, please try again, check your key is correct")
+                except json.decoder.JSONDecodeError: print("Failed to read from response, please try again, check if your key is correct")
                 except FileNotFoundError: print(f"No data yet for {name}")
 
         print("\n\x1b[37m\x1b[1mCHEAT SHEET:\x1b[m\nSTATUS: 0-OFF 1-ON 2-BUSY 3-AWAY 4-SNOOZE 5-LTT 6-LTP")
@@ -139,7 +142,9 @@ class Console():
 
         try: 
             file = open(f"Data/Info/{name}.json").read()
+            time_file = open(f"Data/Info/TimeData/data.json").read()
             self.info_json = json.loads(file)
+            self.time_json = json.loads(time_file)
             filename = wget.download(self.info_json["avatar"], bar=None)
 
             player_info = []
@@ -165,6 +170,12 @@ class Console():
                             print("")
                         else:
                             print(f"{player_info[info][0]}{player_info[info][1]}")
+            day = datetime.today().weekday()
+            for pos in self.time_json:
+                if name in str(self.time_json[pos][str(day)]): 
+                    if self.time_json[pos][str(day)][name][1] == 1: print(f"Today online for: {int(datetime.now().strftime('%H%M%S')) - self.time_json[pos][str(day)][name][2]}")
+                    else:  print(f"Today online for: {self.time_json[pos][str(day)][name][0]}")
+
         except FileNotFoundError: 
             os.system('clear')
             print("-----VACTRACKER SHELL-----")

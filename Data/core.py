@@ -1,14 +1,19 @@
 import requests, json, time, threading, time, os
+from datetime import datetime
 
 class Core():
 
     def __init__(self):
         self.key = open("Data/key.txt", "r").readline(32)
-        try: os.mkdir("Data/Info")
+        try: os.mkdir("Data/Info"); os.mkdir("Data/Info/TimeData")
         except FileExistsError: pass
         if self.key == "":
             print("Please add your key in the key.txt file") 
             exit()
+
+        self.curr_day = None
+        self.max_pos = -1
+        self.account_time_tracked = {}
 
         while True:
             try:
@@ -28,18 +33,21 @@ class Core():
 
     def rename(self, old, new, type):
         if type == "info":
-            try: self.info_json[f"{new}"] = self.info_json.pop(f"{old}")
-            except KeyError: self.info_json[f"{new}"] = "Could not get info"
+            try: self.info_json[f"{new}"] = [self.info_json.pop(f"{old}")]
+            except KeyError: self.info_json[f"{new}"] = ["Could not get info"]
+            
         elif type == "time":
-            try: self.info_json[f"{new}"] = time.strftime("%d.%m %Y", time.localtime(self.info_json.pop(f"{old}")))
-            except KeyError: self.info_json[f"{new}"] = "Could not get info"
+            try: self.info_json[f"{new}"] = [time.strftime("%d.%m %Y", time.localtime(self.info_json.pop(f"{old}")))]
+            except KeyError: self.info_json[f"{new}"] = ["Could not get info"]
             
         elif type == "ban":
-            try: self.info_json[f"{new}"] = self.ban_json.pop(f"{old}")
-            except KeyError: self.ban_json[f"{new}"] = "Could not get info"
+            try: self.info_json[f"{new}"] = [self.ban_json.pop(f"{old}")]
+            except KeyError: self.ban_json[f"{new}"] = ["Could not get info"]
 
     def fetchInfo(self, steamid):
         try:
+
+            #self.trackTime()
 
             basic_request = requests.get(f'https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v1/?key={self.key}&steamids={steamid}')
             ban_request = requests.get(f'https://api.steampowered.com/ISteamUser/GetPlayerBans/v1/?key={self.key}&steamids={steamid}')
@@ -70,12 +78,68 @@ class Core():
             self.rename("timecreated", "Account Age: ", "time")
             self.rename("lastlogoff", "Last Logoff: ", "time")
 
-            filename = self.info_json['Persona Name: '].replace(".", "_").replace(" ", "_")
+            filename = self.info_json['Persona Name: '][0].replace(".", "_").replace(" ", "_")
             
+            for existing_filename in os.listdir("Data/Info/"):
+                try:
+                    if existing_filename == "TimeData": continue
+                    old_file = open(fr"Data/Info/{existing_filename}").read()
+                    existing_steamid = json.loads(old_file)["SteamID: "][0]
+                    new_steamid = self.info_json["SteamID: "][0]
+                    if existing_steamid == new_steamid:
+                        for persona_name in json.loads(old_file)["Persona Name: "]:
+                            if persona_name == self.info_json["Persona Name: "][0]:
+                                if persona_name in self.info_json["Persona Name: "]: 
+                                    index = json.loads(old_file)["Persona Name: "].index(self.info_json["Persona Name: "][0])
+                                    if index != 0:
+                                        self.info_json["Persona Name: "].insert(index+1, f"{persona_name}(prev)")
+                            else: self.info_json["Persona Name: "].append(persona_name)   
+                        if json.loads(old_file)["Persona Name: "][0] == self.info_json['Persona Name: '][0]: continue
+                        else: os.remove(f"Data/Info/{existing_filename}")
+                except json.decoder.JSONDecodeError: pass
+
             with open(fr"Data/Info/{filename}.json", 'w') as outfile:
                 json.dump(self.info_json, outfile)
         except requests.exceptions.ConnectionError: print("steam api did not respond, skipping..")
         except IndexError: print("Failed to get player info..")
+
+    def trackTime(self):
+        cycle_pos = 0
+        for pos, filename in enumerate(os.listdir("Data/Info/")):
+            try: 
+                cycle_pos += 1
+
+                file = open(f"Data/Info/{filename}", "r").read()
+
+                day = datetime.today().weekday()
+
+                persona_name = filename.split('.j')[0]; 
+                account_status = json.loads(file)['Account Status: ']
+
+                if pos > self.max_pos: self.account_time_tracked[pos] = {}; self.max_pos = pos; self.account_time_tracked[pos] = {day: {}}; self.curr_day = datetime.today().weekday()
+                if self.curr_day != datetime.today().weekday(): self.account_time_tracked[pos] = {day: {}}; self.curr_day = datetime.today().weekday()
+
+                if persona_name in self.account_time_tracked[pos][day]: pass
+                else: self.account_time_tracked[pos][day] = {persona_name: [0, 0, 0]}
+
+                if int(self.account_time_tracked[pos][day][persona_name][1]) == int(account_status): pass
+                else: 
+                    if account_status == 1: 
+                        self.account_time_tracked[pos][day][persona_name][1] = 1
+                        self.account_time_tracked[pos][day][persona_name][2] = int(datetime.now().strftime('%H%M%S'))
+                        time_data = open("Data/Info/TimeData/data.json", "w")
+                        json.dump(self.account_time_tracked, time_data)
+                        time_data.close()
+                    if account_status == 0: 
+                        self.account_time_tracked[pos][day][persona_name][0] = self.account_time_tracked[pos][day][persona_name][0] + int(datetime.now().strftime('%H%M%S')) - self.account_time_tracked[pos][day][persona_name][2]  
+                        self.account_time_tracked[pos][day][persona_name][1] = 0
+                        self.account_time_tracked[pos][day][persona_name][2] = 0 
+                        time_data = open("Data/Info/TimeData/data.json", "w")
+                        json.dump(self.account_time_tracked, time_data)
+                        time_data.close()
+
+            except IsADirectoryError: pass
+            except json.decoder.JSONDecodeError: pass
 
 core_thread = threading.Thread(target=Core)
 core_thread.start()
