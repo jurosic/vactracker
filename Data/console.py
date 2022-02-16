@@ -20,6 +20,16 @@ class Console():
         if self.key == "":
             print("Please add your key in the key.txt file") 
             exit()
+
+        self.tg_len_categories = 2
+        self.tg_args = {'filename': 'data/ex4.dat', 'title': None, 'width': 50,
+                'format': '{:<5.2f}', 'suffix': '', 'no_labels': True,
+                'color': None, 'vertical': False, 'stacked': True,
+                'different_scale': False, 'calendar': False,
+                'start_dt': None, 'custom_tick': '', 'delim': '',
+                'verbose': False, 'version': False}
+        self.tg_colors = [91, 94]
+
         self.commands = {
 
             "REMOVE": self.REMOVE,
@@ -39,8 +49,8 @@ class Console():
                     inp[1]
                     self.commands[inp[0]](inp[1])
                 except IndexError:
-                    try: self.commands[inp[0]]()
-                    except TypeError: print("INFO must be followed by the name of a .json file")
+                    self.commands[inp[0]]()
+
 
     def rename(self, old, new):
         try: self.info_json[f"{new}"] = self.info_json.pop(f"{old}")
@@ -173,8 +183,19 @@ class Console():
             day = datetime.today().weekday()
             for pos in self.time_json:
                 if name in str(self.time_json[pos][str(day)]): 
-                    print(f"This session online for: {int(datetime.now().strftime('%H%M%S')) - self.time_json[pos][str(day)][name][2]}")
+                    data = []
+                    normal_data = []
+                    labels = []
+                    for day in self.time_json[pos]:
+                        data.append([self.time_json[pos][day][name][0]])
+                        normal_data.append([self.time_json[pos][day][name][0]/1000])
+                        labels.append(day)
+                    tg.stacked_graph(labels, data, normal_data, self.tg_len_categories, self.tg_args, self.tg_colors)
+                    if self.time_json[pos][str(day)][name][2] != 0:
+                        print(f"This session online for: {int(datetime.now().strftime('%H%M%S')) - self.time_json[pos][str(day)][name][2]}")
                     print(f"Today online for: {self.time_json[pos][str(day)][name][0]}")
+
+
 
         except FileNotFoundError: 
             os.system('clear')

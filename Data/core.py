@@ -2,7 +2,6 @@ import requests, json, time, threading, time, os
 from datetime import datetime
 
 class Core():
-
     def __init__(self):
         self.key = open("Data/key.txt", "r").readline(32)
         try: os.mkdir("Data/Info"); os.mkdir("Data/Info/TimeData")
