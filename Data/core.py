@@ -47,7 +47,7 @@ class Core():
     def fetchInfo(self, steamid):
         try:
 
-            #self.trackTime()
+            self.trackTime()
 
             basic_request = requests.get(f'https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v1/?key={self.key}&steamids={steamid}')
             ban_request = requests.get(f'https://api.steampowered.com/ISteamUser/GetPlayerBans/v1/?key={self.key}&steamids={steamid}')
@@ -114,10 +114,13 @@ class Core():
                 day = datetime.today().weekday()
 
                 persona_name = filename.split('.j')[0]; 
-                account_status = json.loads(file)['Account Status: ']
+                account_status = json.loads(file)['Account Status: '][0]
 
                 if pos > self.max_pos: self.account_time_tracked[pos] = {}; self.max_pos = pos; self.account_time_tracked[pos] = {day: {}}; self.curr_day = datetime.today().weekday()
-                if self.curr_day != datetime.today().weekday(): self.account_time_tracked[pos] = {day: {}}; self.curr_day = datetime.today().weekday()
+                if self.curr_day != datetime.today().weekday(): 
+                    for loop_pos in range(0, len(self.max_pos)):
+                        self.account_time_tracked[loop_pos] = {day: {}} 
+                    self.curr_day = datetime.today().weekday()
 
                 if persona_name in self.account_time_tracked[pos][day]: pass
                 else: self.account_time_tracked[pos][day] = {persona_name: [0, 0, 0]}

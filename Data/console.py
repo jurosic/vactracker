@@ -173,8 +173,8 @@ class Console():
             day = datetime.today().weekday()
             for pos in self.time_json:
                 if name in str(self.time_json[pos][str(day)]): 
-                    if self.time_json[pos][str(day)][name][1] == 1: print(f"Today online for: {int(datetime.now().strftime('%H%M%S')) - self.time_json[pos][str(day)][name][2]}")
-                    else:  print(f"Today online for: {self.time_json[pos][str(day)][name][0]}")
+                    print(f"This session online for: {int(datetime.now().strftime('%H%M%S')) - self.time_json[pos][str(day)][name][2]}")
+                    print(f"Today online for: {self.time_json[pos][str(day)][name][0]}")
 
         except FileNotFoundError: 
             os.system('clear')
