@@ -117,7 +117,7 @@ class Core():
 
                 if pos > self.max_pos: self.account_time_tracked[pos] = {}; self.max_pos = pos; self.account_time_tracked[pos] = {day: {}}; self.curr_day = datetime.today().weekday()
                 if self.curr_day != datetime.today().weekday(): 
-                    for loop_pos in range(0, len(self.max_pos)):
+                    for loop_pos in range(0, self.max_pos):
                         self.account_time_tracked[loop_pos] = {day: {}} 
                     self.curr_day = datetime.today().weekday()
 
