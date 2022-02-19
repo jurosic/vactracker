@@ -2,6 +2,8 @@ from steam.steamid import SteamID
 from termgraph import termgraph as tg
 from datetime import datetime
 
+import smtplib
+import ssl
 import json
 import os
 import threading
@@ -54,6 +56,10 @@ a refresh a .json file of this account will be created."""},
 name of a .json file"""},
             "CLEAR": {"method": self.CLEAR,
                       "description": """Clears the terminal"""},
+            "LOGIN": {"method": self.LOGIN,
+                      "description": """Logs the program into the email you specified to send notifications\
+syntax is 'LOGIN email password recv_email'"""},
+
             "HELP": {"method": self.HELP,
                      "description": """Shows help"""}
 
@@ -65,10 +71,15 @@ name of a .json file"""},
 
             if inp[0] in self.commands:
                 try:
-                    inp[1]
-                    self.commands[inp[0]]["method"](inp[1])
+                    self.commands[inp[0]]["method"](inp[1], inp[2], inp[3])
                 except IndexError:
-                    self.commands[inp[0]]["method"]()
+                    try:
+                        self.commands[inp[0]]["method"](inp[1], inp[2])
+                    except IndexError:
+                        try:
+                            self.commands[inp[0]]["method"](inp[1])
+                        except IndexError:
+                            self.commands[inp[0]]["method"]()
             else:
                 print(f"The command '{inp[0]}' does not exist")
 
@@ -80,6 +91,32 @@ name of a .json file"""},
     def HELP(self):
         for command in self.commands:
             print(f"{command}: {self.commands[command]['description']}")
+
+    @staticmethod
+    def LOGIN(account, password, user, smtp_server="smtp.gmail.com", port=587):
+        context = ssl.create_default_context()
+        try:
+            server = smtplib.SMTP(smtp_server, port)
+            server.ehlo()
+            server.starttls(context=context)
+            server.ehlo()
+            server.login(account, password)
+            server.sendmail(account, user, "Successfully logged in!")
+            notif_config = open("Data/notif.json", "w+")
+            config = {
+                "active": True,
+                "account": account,
+                "password": password,
+                "user": user,
+                "server": smtp_server,
+                "port": port
+            }
+            json.dump(config, notif_config)
+            notif_config.close()
+        except Exception as e:
+            print(e)
+        finally:
+            server.quit()
 
     @staticmethod
     def ADD(steamid):
