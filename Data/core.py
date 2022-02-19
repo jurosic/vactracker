@@ -44,24 +44,33 @@ class Core:
                 print("Exiting..")
                 exit()
 
-    def rename(self, old, new, dir_type):
+    def rename(self, old, new, dir_type, failback=""):
         if dir_type == "info":
             try:
                 self.info_json[f"{new}"] = [self.info_json.pop(f"{old}")]
             except KeyError:
-                self.info_json[f"{new}"] = ["Could not get info"]
+                self.info_json[f"{new}"] = [failback]
 
         elif dir_type == "time":
             try:
                 self.info_json[f"{new}"] = [time.strftime("%d.%m %Y", time.localtime(self.info_json.pop(f"{old}")))]
             except KeyError:
-                self.info_json[f"{new}"] = ["Could not get info"]
+                self.info_json[f"{new}"] = [failback]
 
         elif dir_type == "ban":
             try:
                 self.info_json[f"{new}"] = [self.ban_json.pop(f"{old}")]
             except KeyError:
-                self.ban_json[f"{new}"] = ["Could not get info"]
+                self.ban_json[f"{new}"] = [failback]
+
+        elif dir_type == "gametime":
+            try:
+                self.info_json[f"{new}"] = [f'{round(self.game_list[f"{old}"] / 60, 2)} H']
+            except KeyError:
+                self.info_json[f"{new}"] = [failback]
+
+        elif dir_type == "add":
+            self.info_json[f"{new}"] = [old]
 
     def fetchInfo(self, steamid):
         try:
@@ -72,30 +81,48 @@ class Core:
                 f'https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v1/?key={self.key}&steamids={steamid}')
             ban_request = requests.get(
                 f'https://api.steampowered.com/ISteamUser/GetPlayerBans/v1/?key={self.key}&steamids={steamid}')
+            game_request = requests.get(
+                f'''https://api.steampowered.com/IPlayerService/GetRecentlyPlayedGames/v0001/?key={self.key}&steamid={steamid}&format=json''')
 
             basic_request.raise_for_status()
             ban_request.raise_for_status()
 
             self.info_json = json.loads(basic_request.text)["response"]["players"]["player"][0]
             self.ban_json = json.loads(ban_request.text)["players"][0]
+            try:
+                self.game_json = json.loads(game_request.text)["response"]["games"]
+                game_json_failed = False
+            except KeyError:
+                game_json_failed = True
+                pass
 
-            self.rename("personaname", "Persona Name: ", "info")
-            self.rename("realname", "Real Name: ", "info")
-            self.rename("steamid", "SteamID: ", "info")
-            self.rename("profileurl", "URL: ", "info")
-            self.rename("VACBanned", "VAC Banned: ", "ban")
-            self.rename("CommunityBanned", "Community Banned: ", "ban")
-            self.rename("NumberOfGameBans", "Number of Game Bans: ", "ban")
-            self.rename("DaysSinceLastBan", "Days Since Last Ban: ", "ban")
-            self.rename("gameextrainfo", "Currently in Game: ", "info")
-            self.rename("loccountrycode", "Country Code: ", "info")
-            self.rename("personastate", "Account Status: ", "info")
-            self.rename("communityvisibilitystate", "Profile Visibility: ", "info")
-            self.rename("profilestate", "Configured Profile: ", "info")
-            self.rename("commentpermission", "Comment Permissions: ", "info")
-            self.rename("primaryclanid", "Primary Clan ID: ", "info")
-            self.rename("timecreated", "Account Age: ", "time")
-            self.rename("lastlogoff", "Last Logoff: ", "time")
+            self.rename("personaname", "Persona Name: ", "info", "Could not get persona name")
+            self.rename("realname", "Real Name: ", "info", "Could not get real name (not defined/private)")
+            self.rename("steamid", "SteamID: ", "info", "Could not get steamid")
+            self.rename("profileurl", "URL: ", "info", "No profile URL")
+            self.rename("VACBanned", "VAC Banned: ", "ban", "Failed to get VAC status")
+            self.rename("CommunityBanned", "Community Banned: ", "ban", "Failed to get GameBan status")
+            self.rename("NumberOfGameBans", "Number of Game Bans: ", "ban", "Could not get number of game bans")
+            self.rename("DaysSinceLastBan", "Days Since Last Ban: ", "ban", "Could not get days since last time")
+            self.rename("gameextrainfo", "Currently in Game: ", "info", "Currently Not in any Game")
+            self.rename("gameserverip", "IP of Current Game Server: ", "info", "Currently Not in any Server/NA")
+            if game_json_failed == False:
+                for game in self.game_json:
+                    if game["appid"] == 730:
+                        self.game_list = game
+                        self.rename("playtime_2weeks", "CS:GO PlayTime 2W: ", "gametime", "Could not get PlayTime")
+                        self.rename("playtime_forever", "CS:GO PlayTime Forever: ", "gametime", "Cound not get PlayTime")
+            else:
+                self.rename("Account Private", "CS:GO PlayTime 2W: ", "add")
+                self.rename("Account Private", "CS:GO PlayTime Forever: ", "add")
+            self.rename("loccountrycode", "Country Code: ", "info", "Does not have country code set")
+            self.rename("personastate", "Account Status: ", "info", "Could not get Account Status")
+            self.rename("communityvisibilitystate", "Profile Visibility: ", "info", "Could not get Profile Visibility")
+            self.rename("profilestate", "Configured Profile: ", "info", "Could not get Configured Profile")
+            self.rename("commentpermission", "Comment Permissions: ", "info", "Could not get comment permissions")
+            self.rename("primaryclanid", "Primary Clan ID: ", "info", "Does not have a Primary Clan/Private")
+            self.rename("timecreated", "Account Age: ", "time", "Could not get time when account was created")
+            self.rename("lastlogoff", "Last Logoff: ", "time", "Could not get info about last logoff")
 
             filename = self.info_json['Persona Name: '][0].replace(".", "_").replace(" ", "_")
 
