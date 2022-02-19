@@ -161,7 +161,7 @@ name of a .json file"""},
                         game = f"\x1b[32m{game}\x1b[0m"
 
                     ingame = json.loads(info)['Currently in Game: '][0]
-                    if ingame == "Could not get info":
+                    if ingame == "Currently Not in any Game":
                         ingame = "\x1b[35m0\x1b[m"
                     else:
                         ingame = "\x1b[34m1\x1b[m"
