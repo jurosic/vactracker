@@ -152,7 +152,7 @@ class Core:
                 self.rename("Account Private", "CS:GO PlayTime Forever: ", "add")
             self.rename("loccountrycode", "Country Code: ", "info", "Does not have a Country Code set")
             self.rename("personastate", "Account Status: ", "info", "Could not get Account Status")
-            self.rename([0, 0, 0], "Today Online For: ", "add")
+            self.rename([0, 0, 0, 0], "Today Online For: ", "add")
             self.rename("communityvisibilitystate", "Profile Visibility: ", "info", "Could not get Profile Visibility")
             self.rename("profilestate", "Configured Profile: ", "info", "Could not get Configured Profile")
             self.rename("commentpermission", "Comment Permissions: ", "info", "Could not get comment permissions")
@@ -162,109 +162,115 @@ class Core:
 
             filename = self.info_json['Persona Name: '][0].replace(".", "_").replace(" ", "_")
 
-            self.trackTime(filename)
+            try:
+                self.trackTime(filename)
+            except FileNotFoundError:
+                pass
 
             # Fix this son of a bitch and make it nicer please, and fix the emails ffs >_<
-            for existing_filename in os.listdir("Data/Info/"):
-                try:
-                    if existing_filename == "TimeData":
-                        continue
-                    old_file = open(fr"Data/Info/{existing_filename}").read()
-                    existing_steamid = json.loads(old_file)["SteamID: "][0]
-                    new_steamid = self.info_json["SteamID: "][0]
-                    if existing_steamid == new_steamid:
-                        for persona_name in json.loads(old_file)["Persona Name: "]:
-                            if persona_name == self.info_json["Persona Name: "][0]:
-                                if persona_name in self.info_json["Persona Name: "]:
-                                    index = json.loads(old_file)["Persona Name: "].index(
-                                        self.info_json["Persona Name: "][0])
-                                    if index != 0:
-                                        self.info_json["Persona Name: "].insert(index + 1, f"{persona_name}(prev)")
+            try:
+                for existing_filename in os.listdir("Data/Info/"):
+                    try:
+                        if existing_filename == "TimeData":
+                            continue
+                        old_file = open(fr"Data/Info/{existing_filename}").read()
+                        existing_steamid = json.loads(old_file)["SteamID: "][0]
+                        new_steamid = self.info_json["SteamID: "][0]
+                        if existing_steamid == new_steamid:
+                            for persona_name in json.loads(old_file)["Persona Name: "]:
+                                if persona_name == self.info_json["Persona Name: "][0]:
+                                    if persona_name in self.info_json["Persona Name: "]:
+                                        index = json.loads(old_file)["Persona Name: "].index(
+                                            self.info_json["Persona Name: "][0])
+                                        if index != 0:
+                                            self.info_json["Persona Name: "].insert(index + 1, f"{persona_name}(prev)")
+                                else:
+                                    self.info_json["Persona Name: "].append(persona_name)
+                            if json.loads(old_file)["Persona Name: "][0] == self.info_json['Persona Name: '][0]:
+                                pass
                             else:
-                                self.info_json["Persona Name: "].append(persona_name)
-                        if json.loads(old_file)["Persona Name: "][0] == self.info_json['Persona Name: '][0]:
-                            pass
-                        else:
-                            os.remove(f"Data/Info/{existing_filename}")
-                        if self.send_mail:
-                            if json.loads(old_file)["VAC Banned: "][0] != self.info_json["VAC Banned: "][0]:
-                                message = MIMEMultipart("alternative")
-                                message["Subject"] = "An accounts info has recently changed!"
-                                message["From"] = self.account
-                                message["To"] = self.user
+                                os.remove(f"Data/Info/{existing_filename}")
+                            if self.send_mail:
+                                if json.loads(old_file)["VAC Banned: "][0] != self.info_json["VAC Banned: "][0]:
+                                    message = MIMEMultipart("alternative")
+                                    message["Subject"] = "An accounts info has recently changed!"
+                                    message["From"] = self.account
+                                    message["To"] = self.user
 
-                                html = f"""\
-                                        <html>
-                                            <body>
-                                                <p>The player {self.info_json['Persona Name: '][0]} has recently been VAC Banned! </p>
-                                                <img src={self.info_json['avatarfull']}>
-                                            </body>
-                                        </html>"""
-                                part = MIMEText(html, "html")
-                                message.attach(part)
+                                    html = f"""\
+                                            <html>
+                                                <body>
+                                                    <p>The player {self.info_json['Persona Name: '][0]} has recently been VAC Banned! </p>
+                                                    <img src={self.info_json['avatarfull']}>
+                                                </body>
+                                            </html>"""
+                                    part = MIMEText(html, "html")
+                                    message.attach(part)
 
-                                self.server.sendmail(self.account, self.user, message.as_string())
+                                    self.server.sendmail(self.account, self.user, message.as_string())
 
-                            if json.loads(old_file)["Community Banned: "][0] != self.info_json["Community Banned: "][0]:
-                                message = MIMEMultipart("alternative")
-                                message["Subject"] = "An accounts info has recently changed!"
-                                message["From"] = self.account
-                                message["To"] = self.user
+                                if json.loads(old_file)["Community Banned: "][0] != self.info_json["Community Banned: "][0]:
+                                    message = MIMEMultipart("alternative")
+                                    message["Subject"] = "An accounts info has recently changed!"
+                                    message["From"] = self.account
+                                    message["To"] = self.user
 
-                                html = f"""\
-                                        <html>
-                                            <body>
-                                                <p>The player {self.info_json['Persona Name: '][0]} has recently been COMMUNITY Banned! </p>
-                                                <img src={self.info_json['avatarfull']}>
-                                            </body>
-                                        </html>"""
+                                    html = f"""\
+                                            <html>
+                                                <body>
+                                                    <p>The player {self.info_json['Persona Name: '][0]} has recently been COMMUNITY Banned! </p>
+                                                    <img src={self.info_json['avatarfull']}>
+                                                </body>
+                                            </html>"""
 
-                                part = MIMEText(html, "html")
-                                message.attach(part)
+                                    part = MIMEText(html, "html")
+                                    message.attach(part)
 
-                                self.server.sendmail(self.account, self.user, message.as_string())
+                                    self.server.sendmail(self.account, self.user, message.as_string())
 
-                            if json.loads(old_file)["Number of Game Bans: "][0] != \
-                                    self.info_json["Number of Game Bans: "][0]:
-                                message = MIMEMultipart("alternative")
-                                message["Subject"] = "An accounts info has recently changed!"
-                                message["From"] = self.account
-                                message["To"] = self.user
+                                if json.loads(old_file)["Number of Game Bans: "][0] != \
+                                        self.info_json["Number of Game Bans: "][0]:
+                                    message = MIMEMultipart("alternative")
+                                    message["Subject"] = "An accounts info has recently changed!"
+                                    message["From"] = self.account
+                                    message["To"] = self.user
 
-                                html = f"""\
-                                        <html>
-                                            <body>
-                                                <p>The player {self.info_json['Persona Name: '][0]} has recently been GAME Banned! </p>
-                                                <img src={self.info_json['avatarfull']}>
-                                            </body>
-                                        </html>"""
+                                    html = f"""\
+                                            <html>
+                                                <body>
+                                                    <p>The player {self.info_json['Persona Name: '][0]} has recently been GAME Banned! </p>
+                                                    <img src={self.info_json['avatarfull']}>
+                                                </body>
+                                            </html>"""
 
-                                part = MIMEText(html, "html")
-                                message.attach(part)
+                                    part = MIMEText(html, "html")
+                                    message.attach(part)
 
-                                self.server.sendmail(self.account, self.user, message.as_string())
+                                    self.server.sendmail(self.account, self.user, message.as_string())
 
-                            if json.loads(old_file)["Persona Name: "][0] != self.info_json["Persona Name: "][0]:
-                                message = MIMEMultipart("alternative")
-                                message["Subject"] = "An accounts info has recently changed!"
-                                message["From"] = self.account
-                                message["To"] = self.user
+                                if json.loads(old_file)["Persona Name: "][0] != self.info_json["Persona Name: "][0]:
+                                    message = MIMEMultipart("alternative")
+                                    message["Subject"] = "An accounts info has recently changed!"
+                                    message["From"] = self.account
+                                    message["To"] = self.user
 
-                                html = f"""\
-                                        <html>
-                                            <body>
-                                                <p>The player {json.loads(old_file)["Persona Name: "][0]} has changed his persona name to {self.info_json["Persona Name: "][0]}</p>
-                                                <img src={self.info_json['avatarfull']}>
-                                            </body>
-                                        </html>"""
+                                    html = f"""\
+                                            <html>
+                                                <body>
+                                                    <p>The player {json.loads(old_file)["Persona Name: "][0]} has changed his persona name to {self.info_json["Persona Name: "][0]}</p>
+                                                    <img src={self.info_json['avatarfull']}>
+                                                </body>
+                                            </html>"""
 
-                                part = MIMEText(html, "html")
-                                message.attach(part)
+                                    part = MIMEText(html, "html")
+                                    message.attach(part)
 
-                                self.server.sendmail(self.account, self.user, message.as_string())
+                                    self.server.sendmail(self.account, self.user, message.as_string())
 
-                except json.decoder.JSONDecodeError:
-                    pass
+                    except json.decoder.JSONDecodeError:
+                        pass
+            except FileNotFoundError:
+                pass
 
             with open(fr"Data/Info/{filename}.json", 'w') as outfile:
                 json.dump(self.info_json, outfile)
@@ -277,6 +283,13 @@ class Core:
         player_file = json.loads(open(f"Data/Info/{filename}.json", "r").read())
         raw_time = datetime.now().strftime('%H:%M:%S').split(":")
         time_now = (int(raw_time[0]) * 3600) + (int(raw_time[1]) * 60) + (int(raw_time[2]))
+        day = datetime.today().weekday()
+        if day != player_file["Today Online For: "][0][3]:
+            self.info_json["Today Online For: "][0][0] = 0
+            self.info_json["Today Online For: "][0][1] = 0
+            self.info_json["Today Online For: "][0][2] = 0
+            self.info_json["Today Online For: "][0][3] = day
+
         self.info_json["Today Online For: "][0][2] = player_file["Today Online For: "][0][2]
         if self.info_json["Account Status: "][0] == 1:
             self.info_json["Today Online For: "][0][1] = time_now - player_file["Today Online For: "][0][2]

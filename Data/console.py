@@ -148,14 +148,14 @@ syntax is 'LOGIN email password recv_email'"""},
             for filename in os.listdir("Data/Info/"):
                 player_file = open(f"Data/Info/{filename}").read()
                 player_json = json.loads(player_file)
-                player_id = player_json["SteamID: "]
+                player_id = player_json["SteamID: "][0]
                 try:
                     if int(player_id) == int(steamid):
-                        os.remove(f"Data/Info/{player_json['Persona Name: ']}.json")
+                        os.remove(f"Data/Info/{player_json['Persona Name: '][0]}.json")
                     else:
                         players_file.write(f"{player_id},")
                 except TypeError:
-                    print("That account does not exist, please use steamid")
+                    print("That account does not exist, please use SteamID")
                     continue
             players_file.close()
 
