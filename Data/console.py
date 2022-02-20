@@ -79,7 +79,10 @@ syntax is 'LOGIN email password recv_email'"""},
                         try:
                             self.commands[inp[0]]["method"](inp[1])
                         except IndexError:
-                            self.commands[inp[0]]["method"]()
+                            try:
+                                self.commands[inp[0]]["method"]()
+                            except TypeError:
+                                print("Invalid syntax!")
             else:
                 print(f"The command '{inp[0]}' does not exist")
 
@@ -235,9 +238,7 @@ syntax is 'LOGIN email password recv_email'"""},
 
         try:
             file = open(f"Data/Info/{name}.json").read()
-            time_file = open(f"Data/Info/TimeData/data.json").read()
             info_json = json.loads(file)
-            time_json = json.loads(time_file)
             filename = wget.download(info_json["avatar"], bar=None)
 
             player_info = []
@@ -263,24 +264,6 @@ syntax is 'LOGIN email password recv_email'"""},
                             print("")
                         else:
                             print(f"{player_info[info][0]}{player_info[info][1]}")
-            """
-            day = datetime.today().weekday()
-            for pos in time_json:
-                if name in str(time_json[pos][str(day)]):
-                    data = []
-                    normal_data = []
-                    labels = []
-                    for day in time_json[pos]:
-                        data.append([time_json[pos][day][name][0]])
-                        normal_data.append([time_json[pos][day][name][0] / 1000])
-                        labels.append(day)
-                    tg.stacked_graph(labels, data, normal_data, self.tg_len_categories, self.tg_args, self.tg_colors)
-                    if time_json[pos][str(day)][name][2] != 0:
-                        print(
-                            f"This session online for: {int(datetime.now().strftime('%H%M%S')) - time_json[pos][str(day)][name][2]}")
-                    print(f"Today online for: {time_json[pos][str(day)][name][0]}")
-                    """
-
         except FileNotFoundError:
             os.system('clear')
             print("-----VACTRACKER SHELL-----")

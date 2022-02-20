@@ -2,7 +2,6 @@ from datetime import datetime
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
-
 import ssl
 import smtplib
 import json
@@ -112,9 +111,6 @@ class Core:
 
     def fetchInfo(self, steamid):
         try:
-
-            self.trackTime()
-
             basic_request = requests.get(
                 f'https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v1/?key={self.key}&steamids={steamid}')
             ban_request = requests.get(
@@ -156,6 +152,7 @@ class Core:
                 self.rename("Account Private", "CS:GO PlayTime Forever: ", "add")
             self.rename("loccountrycode", "Country Code: ", "info", "Does not have a Country Code set")
             self.rename("personastate", "Account Status: ", "info", "Could not get Account Status")
+            self.rename([0, 0, 0], "Today Online For: ", "add")
             self.rename("communityvisibilitystate", "Profile Visibility: ", "info", "Could not get Profile Visibility")
             self.rename("profilestate", "Configured Profile: ", "info", "Could not get Configured Profile")
             self.rename("commentpermission", "Comment Permissions: ", "info", "Could not get comment permissions")
@@ -165,7 +162,9 @@ class Core:
 
             filename = self.info_json['Persona Name: '][0].replace(".", "_").replace(" ", "_")
 
-            #Fix this son of a bitch and make it nicer please, and fix the emails ffs >_<
+            self.trackTime(filename)
+
+            # Fix this son of a bitch and make it nicer please, and fix the emails ffs >_<
             for existing_filename in os.listdir("Data/Info/"):
                 try:
                     if existing_filename == "TimeData":
@@ -225,7 +224,8 @@ class Core:
 
                                 self.server.sendmail(self.account, self.user, message.as_string())
 
-                            if json.loads(old_file)["Number of Game Bans: "][0] != self.info_json["Number of Game Bans: "][0]:
+                            if json.loads(old_file)["Number of Game Bans: "][0] != \
+                                    self.info_json["Number of Game Bans: "][0]:
                                 message = MIMEMultipart("alternative")
                                 message["Subject"] = "An accounts info has recently changed!"
                                 message["From"] = self.account
@@ -273,55 +273,21 @@ class Core:
         except IndexError:
             print("Failed to get player info..")
 
-    def trackTime(self):
-        cycle_pos = 0
-        for pos, filename in enumerate(os.listdir("Data/Info/")):
-            try:
-                cycle_pos += 1
+    def trackTime(self, filename):
+        player_file = json.loads(open(f"Data/Info/{filename}.json", "r").read())
+        raw_time = datetime.now().strftime('%H:%M:%S').split(":")
+        time_now = (int(raw_time[0]) * 3600) + (int(raw_time[1]) * 60) + (int(raw_time[2]))
+        self.info_json["Today Online For: "][0][2] = player_file["Today Online For: "][0][2]
+        if self.info_json["Account Status: "][0] == 1:
+            self.info_json["Today Online For: "][0][1] = time_now - player_file["Today Online For: "][0][2]
+        else:
+            self.info_json["Today Online For: "][0][1] = 0
+        if player_file["Account Status: "][0] != self.info_json["Account Status: "][0]:
+            if self.info_json["Account Status: "][0] == 1:
+                self.info_json["Today Online For: "][0][2] = time_now
 
-                file = open(f"Data/Info/{filename}", "r").read()
+            if self.info_json["Account Status: "][0] == 0:
+                self.info_json["Today Online For: "][0][0] = (time_now - player_file["Today Online For: "][0][2] +
+                                                              player_file["Today Online For: "][0][0])
+                self.info_json["Today Online For: "][0][2] = 0
 
-                day = datetime.today().weekday()
-
-                persona_name = filename.split('.j')[0]
-                account_status = json.loads(file)['Account Status: '][0]
-
-                if pos > self.max_pos:
-                    self.account_time_tracked[pos] = {}
-                    self.max_pos = pos
-                self.account_time_tracked[pos] = {day: {}}
-                self.curr_day = datetime.today().weekday()
-                if self.curr_day != datetime.today().weekday():
-                    for loop_pos in range(0, self.max_pos):
-                        self.account_time_tracked[loop_pos] = {day: {}}
-                    self.curr_day = datetime.today().weekday()
-
-                if persona_name in self.account_time_tracked[pos][day]:
-                    pass
-                else:
-                    self.account_time_tracked[pos][day] = {persona_name: [0, 0, 0]}
-
-                if int(self.account_time_tracked[pos][day][persona_name][1]) == int(account_status):
-                    pass
-                else:
-                    if account_status == 1:
-                        self.account_time_tracked[pos][day][persona_name][1] = 1
-                        self.account_time_tracked[pos][day][persona_name][2] = int(datetime.now().strftime('%H%M%S'))
-                        time_data = open("Data/Info/TimeData/data.json", "w")
-                        json.dump(self.account_time_tracked, time_data)
-                        time_data.close()
-                    if account_status == 0:
-                        self.account_time_tracked[pos][day][persona_name][0] = \
-                            self.account_time_tracked[pos][day][persona_name][0] + int(
-                                datetime.now().strftime('%H%M%S')) - \
-                            self.account_time_tracked[pos][day][persona_name][2]
-                        self.account_time_tracked[pos][day][persona_name][1] = 0
-                        self.account_time_tracked[pos][day][persona_name][2] = 0
-                        time_data = open("Data/Info/TimeData/data.json", "w")
-                        json.dump(self.account_time_tracked, time_data)
-                        time_data.close()
-
-            except IsADirectoryError:
-                pass
-            except json.decoder.JSONDecodeError:
-                pass
