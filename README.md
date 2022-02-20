@@ -8,7 +8,7 @@ COMMANDS: ADD [custom account id/steamid of account] (Adds account)
           ALL (Lists persona name of every account in the players.txt file, and names of all .json files, also lists VAC, COM and GAME bans)
 ```
 
-TODO: add time online rn to time total, optimise email sending, oh yeah, and make it FUCKING CLEANER, store what id the user was added with(cust uid), get friends list, graph accounts online time for days, ~~save more info to something like extra info json~~[time, so far], add online rn for to data.json, change filenotfound to /his time file, ~~add a detailed view~~, ~~notify of wrong command~~, ~~add 'HELP' command~~, ~~Save info about player from time of add~~, ~~trace changes of accounts~~, ~~make a better refreshing function because banned list is sometimes empty~~, ~~get csgo play time~~, ~~fix random crashes~~, ~~make a "notification" system~~,
+TODO: transfer online time past midnignt, fix online time to one day only, add time online rn to time total, optimise email sending, oh yeah, and make it FUCKING CLEANER, store what id the user was added with(cust uid), get friends list, graph accounts online time for days, ~~save more info to something like extra info json~~[time, so far], add online rn for to data.json, change filenotfound to /his time file, ~~add a detailed view~~, ~~notify of wrong command~~, ~~add 'HELP' command~~, ~~Save info about player from time of add~~, ~~trace changes of accounts~~, ~~make a better refreshing function because banned list is sometimes empty~~, ~~get csgo play time~~, ~~fix random crashes~~, ~~make a "notification" system~~,
 
 HARD TO DO: make gui more lively, fix error messages after KeyboardInterrupt, get group names and shiz like that,
 
