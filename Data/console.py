@@ -31,13 +31,13 @@ class Console:
             exit()
 
         self.tg_len_categories = 2
-        self.tg_args = {'filename': 'data/ex4.dat', 'title': None, 'width': 50,
-                        'format': '{:<5.2f}', 'suffix': '', 'no_labels': True,
+        self.tg_args = {'filename': '', 'title': None, 'width': 50,
+                        'format': '{:<5.2f}', 'suffix': '', 'no_labels': False,
                         'color': None, 'vertical': False, 'stacked': True,
                         'different_scale': False, 'calendar': False,
                         'start_dt': None, 'custom_tick': '', 'delim': '',
                         'verbose': False, 'version': False}
-        self.tg_colors = [91, 94]
+        self.tg_colors = [91, 92, 90, 94]
 
         self.commands = {
 
@@ -228,14 +228,13 @@ syntax is 'LOGIN email password recv_email'"""},
             for filename in os.listdir("Data/Info/"):
                 player_file = open(f"Data/Info/{filename}").read()
                 player_json = json.loads(player_file)
-                players_file.write(f"{player_json['SteamID: ']},")
+                players_file.write(f"{player_json['SteamID: '][0]},")
 
         os.system("clear")
         print("-----VACTRACKER SHELL-----")
         print("Rebased!")
 
-    @staticmethod
-    def INFO(name):
+    def INFO(self, name):
         os.system('clear')
 
         try:
@@ -247,7 +246,16 @@ syntax is 'LOGIN email password recv_email'"""},
             for info in info_json:
                 if info == 'avatar' or info == 'avatarmedium' or info == 'avatarfull' or info == 'avatarhash' or info == 'personastateflags' or info == 'gameid' or info == 'lobbysteamid':
                     continue
-                player_info.append((info, info_json[info]))
+                if info == "Online For: ":
+                    day = str(datetime.today().weekday())
+                    player_info.append((info, [f"""TT-O: {round((info_json[info][0][day][0] / 3600) + 
+                                                                       (info_json[info][0][day][1] / 3600), 3)}H""",
+                                               f"TS-O: {round(info_json[info][0][day][1] / 3600, 3)}H",
+                                               f"""TT-BALL: {round((info_json[info][0][day][2] / 3600) +
+                                                                      (info_json[info][0][day][3] / 3600), 3)}H""",
+                                               f"TS-BALL: {round(info_json[info][0][day][3] / 3600, 3)}H"]))
+                else:
+                    player_info.append((info, info_json[info]))
 
             img = climage.convert(filename).split("\n")
             temp = []
@@ -266,10 +274,33 @@ syntax is 'LOGIN email password recv_email'"""},
                             print("")
                         else:
                             print(f"{player_info[info][0]}{player_info[info][1]}")
+
+            self._drawGraph(name)
+
         except FileNotFoundError:
             os.system('clear')
             print("-----VACTRACKER SHELL-----")
-            print("This user does not exist")
+            print("That user does not exist")
+
+        except KeyError:
+            print(f"No time data for {name}, please wait.")
+
+    def _drawGraph(self, name):
+        print("Online Time Graph for Multiple Days in Hours: ")
+        print("-"*80)
+        player_file = open(f"Data/Info/{name}.json", "r").read()
+        player_time = json.loads(player_file)["Online For: "][0]
+
+        labels = []
+        data = []
+        normal_data = []
+
+        for key, value in player_time.items():
+            labels.append(key)
+            data.append([(value[0]/3600), (value[2]/3600), (value[3]/3600), (value[1]/3600)])
+            normal_data.append([((value[0]/3600)*10), ((value[2]/3600)*10), ((value[3]/3600)*10), ((value[1]/3600)*10)])
+
+        tg.stacked_graph(labels, data, normal_data, self.tg_len_categories, self.tg_args, self.tg_colors)
 
 
 if __name__ == "__main__":
