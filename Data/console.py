@@ -213,6 +213,8 @@ syntax is 'LOGIN email password recv_email'"""},
                     print("Failed to read from response, please try again, check if your key is correct")
                 except FileNotFoundError:
                     print(f"No data yet for {name}")
+                except requests.exceptions.ConnectionError:
+                    print("Steam api did not respond for this player, try again")
 
         print("\n\x1b[37m\x1b[1mCHEAT SHEET:\x1b[m\nSTATUS: 0-OFF 1-ON 2-BUSY 3-AWAY 4-SNOOZE 5-LTT 6-LTP")
 
@@ -243,7 +245,7 @@ syntax is 'LOGIN email password recv_email'"""},
 
             player_info = []
             for info in info_json:
-                if info == 'avatar' or info == 'avatarmedium' or info == 'avatarfull' or info == 'avatarhash' or info == 'personastateflags' or info == 'gameid':
+                if info == 'avatar' or info == 'avatarmedium' or info == 'avatarfull' or info == 'avatarhash' or info == 'personastateflags' or info == 'gameid' or info == 'lobbysteamid':
                     continue
                 player_info.append((info, info_json[info]))
 
@@ -268,3 +270,7 @@ syntax is 'LOGIN email password recv_email'"""},
             os.system('clear')
             print("-----VACTRACKER SHELL-----")
             print("This user does not exist")
+
+
+if __name__ == "__main__":
+    print("Please run this as an import and initialize the class")
