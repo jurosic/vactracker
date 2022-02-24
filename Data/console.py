@@ -79,10 +79,10 @@ syntax is 'LOGIN email password recv_email'"""},
                         try:
                             self.commands[inp[0]]["method"](inp[1])
                         except IndexError:
-                            try:
+                            #try:
                                 self.commands[inp[0]]["method"]()
-                            except TypeError:
-                                print("Invalid syntax!")
+                            #except TypeError:
+                            #    print("Invalid syntax!")
             else:
                 print(f"The command '{inp[0]}' does not exist")
 
@@ -134,8 +134,11 @@ syntax is 'LOGIN email password recv_email'"""},
             if str(steamid) in open("Data/players.txt", "r").read().split(","):
                 print("This player is already in your list.")
             else:
-                players_file.write(f"{steamid},")
-                print(f"Player successfully added to tracklist. {method}")
+                if steamid is not None:
+                    players_file.write(f"{steamid},")
+                    print(f"Player successfully added to tracklist. {method}")
+                else:
+                    print("This player does not exist!")
 
     @staticmethod
     def REMOVE(steamid):
