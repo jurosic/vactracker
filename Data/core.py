@@ -106,6 +106,12 @@ class Core:
             except KeyError:
                 self.info_json[f"{new}"] = [failback]
 
+        elif dir_type == "strint":
+            try:
+                self.info_json[f"{new}"] = [int(self.info_json.pop(f"{old}"))]
+            except KeyError:
+                self.info_json[f"{new}"] = [failback]
+
         elif dir_type == "add":
             self.info_json[f"{new}"] = [old]
 
@@ -135,7 +141,7 @@ class Core:
 
             self.rename("personaname", "Persona Name: ", "info", "Could not get persona name")
             self.rename("realname", "Real Name: ", "info", "Could not get real name (not defined/private)")
-            self.rename("steamid", "SteamID: ", "info", "Could not get steamid")
+            self.rename("steamid", "SteamID: ", "strint", "Could not get steamid")
             self.rename("profileurl", "URL: ", "info", "No profile URL")
             self.rename("VACBanned", "VAC Banned: ", "ban", "Failed to get VAC status")
             self.rename("CommunityBanned", "Community Banned: ", "ban", "Failed to get GameBan status")
@@ -155,12 +161,14 @@ class Core:
                 self.rename("Account Private", "CS:GO PlayTime 2W: ", "add")
                 self.rename("Account Private", "CS:GO PlayTime Forever: ", "add")
             self.rename("loccountrycode", "Country Code: ", "info", "Does not have a Country Code set")
+            self.rename("locstatecode", "State Code: ", "strint", "Does not have a State Code set")
+            self.rename("loccityid", "City ID: ", "strint", "Does not have a City ID set")
             self.rename("personastate", "Account Status: ", "info", "Could not get Account Status")
             self.rename({}, "Online For: ", "add")
             self.rename("communityvisibilitystate", "Profile Visibility: ", "info", "Could not get Profile Visibility")
             self.rename("profilestate", "Configured Profile: ", "info", "Could not get Configured Profile")
             self.rename("commentpermission", "Comment Permissions: ", "info", "Could not get comment permissions")
-            self.rename("primaryclanid", "Primary Clan ID: ", "info", "Does not have a Primary Clan/Private")
+            self.rename("primaryclanid", "Primary Clan ID: ", "strint", "Does not have a Primary Clan/Private")
             self.rename("timecreated", "Date Created: ", "time", "Could not get time when account was created")
             self.rename("lastlogoff", "Last Logoff: ", "time", "Could not get info about last logoff")
 
