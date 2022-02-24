@@ -1,5 +1,9 @@
 from datetime import datetime
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
+import ssl
+import smtplib
 import json
 import os
 import requests
@@ -9,6 +13,16 @@ import time
 
 class Core:
     def __init__(self):
+
+        self.game_json = None
+        self.account = None
+        self.send_mail = None
+        self.game_list = None
+        self.ban_json = None
+        self.info_json = None
+        self.user = None
+        self.server = None
+
         self.key = open("Data/key.txt", "r").readline(32)
         try:
             os.mkdir("Data/Info")
@@ -27,8 +41,31 @@ class Core:
         thread.start()
 
     def start(self):
+        logged_in = False
         os.system('clear')
         while True:
+            try:
+                if not logged_in:
+                    notif_config = json.loads(open("Data/notif.json", "r").read())
+                    self.send_mail = notif_config["active"]
+                    if self.send_mail:
+                        server = notif_config["server"]
+                        port = notif_config["port"]
+                        self.account = notif_config["account"]
+                        password = notif_config["password"]
+                        self.user = notif_config["user"]
+
+                        context = ssl.create_default_context()
+                        self.server = smtplib.SMTP(server, port)
+                        self.server.ehlo()
+                        self.server.starttls(context=context)
+                        self.server.ehlo()
+                        self.server.login(self.account, password)
+                        logged_in = True
+
+            except FileNotFoundError:
+                pass
+
             try:
                 players_file = open("Data/players.txt", "r").read()
                 for player in players_file.split(","):
@@ -74,18 +111,18 @@ class Core:
 
     def fetchInfo(self, steamid):
         try:
-
-            self.trackTime()
-
             basic_request = requests.get(
                 f'https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v1/?key={self.key}&steamids={steamid}')
+            time.sleep(1)
             ban_request = requests.get(
                 f'https://api.steampowered.com/ISteamUser/GetPlayerBans/v1/?key={self.key}&steamids={steamid}')
+            time.sleep(1)
             game_request = requests.get(
                 f'''https://api.steampowered.com/IPlayerService/GetRecentlyPlayedGames/v0001/?key={self.key}&steamid={steamid}&format=json''')
 
             basic_request.raise_for_status()
             ban_request.raise_for_status()
+            game_request.raise_for_status()
 
             self.info_json = json.loads(basic_request.text)["response"]["players"]["player"][0]
             self.ban_json = json.loads(ban_request.text)["players"][0]
@@ -106,106 +143,208 @@ class Core:
             self.rename("DaysSinceLastBan", "Days Since Last Ban: ", "ban", "Could not get days since last time")
             self.rename("gameextrainfo", "Currently in Game: ", "info", "Currently Not in any Game")
             self.rename("gameserverip", "IP of Current Game Server: ", "info", "Currently Not in any Server/NA")
-            if game_json_failed == False:
+            if not game_json_failed:
                 for game in self.game_json:
                     if game["appid"] == 730:
                         self.game_list = game
                         self.rename("playtime_2weeks", "CS:GO PlayTime 2W: ", "gametime", "Could not get PlayTime")
-                        self.rename("playtime_forever", "CS:GO PlayTime Forever: ", "gametime", "Cound not get PlayTime")
+                        self.rename("playtime_forever", "CS:GO PlayTime Forever: ", "gametime",
+                                    "Cound not get PlayTime")
             else:
                 self.rename("Account Private", "CS:GO PlayTime 2W: ", "add")
                 self.rename("Account Private", "CS:GO PlayTime Forever: ", "add")
-            self.rename("loccountrycode", "Country Code: ", "info", "Does not have country code set")
+            self.rename("loccountrycode", "Country Code: ", "info", "Does not have a Country Code set")
             self.rename("personastate", "Account Status: ", "info", "Could not get Account Status")
+            self.rename({}, "Online For: ", "add")
             self.rename("communityvisibilitystate", "Profile Visibility: ", "info", "Could not get Profile Visibility")
             self.rename("profilestate", "Configured Profile: ", "info", "Could not get Configured Profile")
             self.rename("commentpermission", "Comment Permissions: ", "info", "Could not get comment permissions")
             self.rename("primaryclanid", "Primary Clan ID: ", "info", "Does not have a Primary Clan/Private")
-            self.rename("timecreated", "Account Age: ", "time", "Could not get time when account was created")
+            self.rename("timecreated", "Date Created: ", "time", "Could not get time when account was created")
             self.rename("lastlogoff", "Last Logoff: ", "time", "Could not get info about last logoff")
 
             filename = self.info_json['Persona Name: '][0].replace(".", "_").replace(" ", "_")
 
-            for existing_filename in os.listdir("Data/Info/"):
-                try:
-                    if existing_filename == "TimeData":
-                        continue
-                    old_file = open(fr"Data/Info/{existing_filename}").read()
-                    existing_steamid = json.loads(old_file)["SteamID: "][0]
-                    new_steamid = self.info_json["SteamID: "][0]
-                    if existing_steamid == new_steamid:
-                        for persona_name in json.loads(old_file)["Persona Name: "]:
-                            if persona_name == self.info_json["Persona Name: "][0]:
-                                if persona_name in self.info_json["Persona Name: "]:
-                                    index = json.loads(old_file)["Persona Name: "].index(
-                                        self.info_json["Persona Name: "][0])
-                                    if index != 0:
-                                        self.info_json["Persona Name: "].insert(index + 1, f"{persona_name}(prev)")
-                            else:
-                                self.info_json["Persona Name: "].append(persona_name)
-                        if json.loads(old_file)["Persona Name: "][0] == self.info_json['Persona Name: '][0]:
-                            continue
-                        else:
-                            os.remove(f"Data/Info/{existing_filename}")
-                except json.decoder.JSONDecodeError:
-                    pass
+            try:
+                self.trackTime(filename)
+            except FileNotFoundError:
+                pass
+
+            # Fix this son of a bitch and make it nicer please, and fix the emails ffs >_<
+            try:
+                for existing_filename in os.listdir("Data/Info/"):
+                    try:
+                        old_file = open(fr"Data/Info/{existing_filename}").read()
+                        existing_steamid = json.loads(old_file)["SteamID: "][0]
+                        new_steamid = self.info_json["SteamID: "][0]
+                        old_json = json.loads(old_file)
+                        if existing_steamid == new_steamid:
+                            for persona_name in json.loads(old_file)["Persona Name: "]:
+                                if persona_name == self.info_json["Persona Name: "][0]:
+                                    if persona_name in self.info_json["Persona Name: "]:
+                                        index = json.loads(old_file)["Persona Name: "].index(
+                                            self.info_json["Persona Name: "][0])
+                                        if index != 0:
+                                            self.info_json["Persona Name: "].insert(index + 1,
+                                                                                    f"{persona_name}(prev)")
+                                else:
+                                    self.info_json["Persona Name: "].append(persona_name)
+
+                            if json.loads(old_file)["VAC Banned: "][0] != self.info_json["VAC Banned: "][0]:
+                                self.info_json["VAC Banned: "].append(json.loads(old_file)["VAC Banned: "][0])
+                                if self.send_mail:
+                                    if old_json["VAC Banned: "][0] != self.info_json["VAC Banned: "][0]:
+                                        message = MIMEMultipart("alternative")
+                                        message["Subject"] = "An accounts info has recently changed!"
+                                        message["From"] = self.account
+                                        message["To"] = self.user
+
+                                        html = f"""\
+                                                    <html>
+                                                        <body>
+                                                            <p>The player {self.info_json['Persona Name: '][0]} has recently\
+                                                             been VAC Banned! </p>
+                                                            <img src={self.info_json['avatarfull']}>
+                                                        </body>
+                                                    </html>"""
+                                        part = MIMEText(html, "html")
+                                        message.attach(part)
+
+                                        self.server.sendmail(self.account, self.user, message.as_string())
+
+                            if json.loads(old_file)["Persona Name: "][0] != self.info_json['Persona Name: '][0]:
+                                os.remove(f"Data/Info/{existing_filename}")
+
+                            if self.send_mail:
+
+                                if old_json["Community Banned: "][0] != self.info_json["Community Banned: "][0]:
+                                    message = MIMEMultipart("alternative")
+                                    message["Subject"] = "An accounts info has recently changed!"
+                                    message["From"] = self.account
+                                    message["To"] = self.user
+
+                                    html = f"""\
+                                                <html>
+                                                    <body>
+                                                        <p>The player {self.info_json['Persona Name: '][0]} has recently been COMMUNITY Banned! </p>
+                                                        <img src={self.info_json['avatarfull']}>
+                                                    </body>
+                                                </html>"""
+
+                                    part = MIMEText(html, "html")
+                                    message.attach(part)
+
+                                    self.server.sendmail(self.account, self.user, message.as_string())
+
+                                if old_json["Number of Game Bans: "][0] != \
+                                        self.info_json["Number of Game Bans: "][0]:
+                                    message = MIMEMultipart("alternative")
+                                    message["Subject"] = "An accounts info has recently changed!"
+                                    message["From"] = self.account
+                                    message["To"] = self.user
+
+                                    html = f"""\
+                                                <html>
+                                                    <body>
+                                                        <p>The player {self.info_json['Persona Name: '][0]} has recently been GAME Banned! </p>
+                                                        <img src={self.info_json['avatarfull']}>
+                                                    </body>
+                                                </html>"""
+
+                                    part = MIMEText(html, "html")
+                                    message.attach(part)
+
+                                    self.server.sendmail(self.account, self.user, message.as_string())
+
+                                if old_json["Persona Name: "][0] != self.info_json["Persona Name: "][0]:
+                                    message = MIMEMultipart("alternative")
+                                    message["Subject"] = "An accounts info has recently changed!"
+                                    message["From"] = self.account
+                                    message["To"] = self.user
+
+                                    html = f"""\
+                                                <html>
+                                                    <body>
+                                                        <p>The player {json.loads(old_file)["Persona Name: "][0]} has changed his persona name to {self.info_json["Persona Name: "][0]}</p>
+                                                        <img src={self.info_json['avatarfull']}>
+                                                    </body>
+                                                </html>"""
+
+                                    part = MIMEText(html, "html")
+                                    message.attach(part)
+
+                                    self.server.sendmail(self.account, self.user, message.as_string())
+
+                    except json.decoder.JSONDecodeError:
+                        pass
+            except FileNotFoundError:
+                pass
 
             with open(fr"Data/Info/{filename}.json", 'w') as outfile:
                 json.dump(self.info_json, outfile)
         except requests.exceptions.ConnectionError:
             print("steam api did not respond, skipping..")
+        except requests.exceptions.HTTPError:
+            print("steam api threw internal server error, skipping...")
         except IndexError:
             print("Failed to get player info..")
 
-    def trackTime(self):
-        cycle_pos = 0
-        for pos, filename in enumerate(os.listdir("Data/Info/")):
-            try:
-                cycle_pos += 1
+    def trackTime(self, filename):
+        player_file = json.loads(open(f"Data/Info/{filename}.json", "r").read())
+        raw_time = datetime.now().strftime('%H:%M:%S').split(":")
+        time_now = (int(raw_time[0]) * 3600) + (int(raw_time[1]) * 60) + (int(raw_time[2]))
+        day = str(datetime.today().weekday())
 
-                file = open(f"Data/Info/{filename}", "r").read()
+        if day not in player_file["Online For: "][0]:
+            player_file["Online For: "][0][day] = [0, 0, 0, 0, 0, False]
 
-                day = datetime.today().weekday()
+        latest_key = 0
+        for key, value in player_file.items():
+            latest_key = key
 
-                persona_name = filename.split('.j')[0]
-                account_status = json.loads(file)['Account Status: '][0]
+        if latest_key == 6 and day == 0:
+            pass
+        else:
+            self.info_json["Online For: "][0] = player_file["Online For: "][0]
+        if player_file["Account Status: "][0] != self.info_json["Account Status: "][0]:
+            if self.info_json["Account Status: "][0] == 1:
+                if player_file["Account Status: "][0] > 1:
+                    self.info_json["Online For: "][0][day][2] = (time_now - player_file["Online For: "][0][day][4] +
+                                                                 player_file["Online For: "][0][day][2])
+                self.info_json["Online For: "][0][day][4] = time_now
 
-                if pos > self.max_pos:
-                    self.account_time_tracked[pos] = {}
-                    self.max_pos = pos
-                self.account_time_tracked[pos] = {day: {}}
-                self.curr_day = datetime.today().weekday()
-                if self.curr_day != datetime.today().weekday():
-                    for loop_pos in range(0, self.max_pos):
-                        self.account_time_tracked[loop_pos] = {day: {}}
-                    self.curr_day = datetime.today().weekday()
+            if self.info_json["Account Status: "][0] > 1:
+                self.info_json["Online For: "][0][day][0] = (time_now - player_file["Online For: "][0][day][4] +
+                                                             player_file["Online For: "][0][day][0])
+                self.info_json["Online For: "][0][day][4] = time_now
 
-                if persona_name in self.account_time_tracked[pos][day]:
-                    pass
+            if self.info_json["Account Status: "][0] == 0:
+                if player_file["Account Status: "][0] > 1:
+                    self.info_json["Online For: "][0][day][2] = (time_now - player_file["Online For: "][0][day][4] +
+                                                                 player_file["Online For: "][0][day][2])
                 else:
-                    self.account_time_tracked[pos][day] = {persona_name: [0, 0, 0]}
+                    self.info_json["Online For: "][0][day][0] = (time_now - player_file["Online For: "][0][day][4] +
+                                                                 player_file["Online For: "][0][day][0])
+                self.info_json["Online For: "][0][day][4] = 0
 
-                if int(self.account_time_tracked[pos][day][persona_name][1]) == int(account_status):
-                    pass
-                else:
-                    if account_status == 1:
-                        self.account_time_tracked[pos][day][persona_name][1] = 1
-                        self.account_time_tracked[pos][day][persona_name][2] = int(datetime.now().strftime('%H%M%S'))
-                        time_data = open("Data/Info/TimeData/data.json", "w")
-                        json.dump(self.account_time_tracked, time_data)
-                        time_data.close()
-                    if account_status == 0:
-                        self.account_time_tracked[pos][day][persona_name][0] = \
-                            self.account_time_tracked[pos][day][persona_name][0] + int(
-                                datetime.now().strftime('%H%M%S')) - \
-                            self.account_time_tracked[pos][day][persona_name][2]
-                        self.account_time_tracked[pos][day][persona_name][1] = 0
-                        self.account_time_tracked[pos][day][persona_name][2] = 0
-                        time_data = open("Data/Info/TimeData/data.json", "w")
-                        json.dump(self.account_time_tracked, time_data)
-                        time_data.close()
+        if self.info_json["Account Status: "][0] == 1:
+            if not player_file["Online For: "][0][day][5]:
+                self.info_json["Online For: "][0][day][4] = time_now
+                player_file["Online For: "][0][day][5] = True
 
-            except IsADirectoryError:
-                pass
-            except json.decoder.JSONDecodeError:
-                pass
+            self.info_json["Online For: "][0][day][1] = time_now - player_file["Online For: "][0][day][4]
+        else:
+            self.info_json["Online For: "][0][day][1] = 0
+
+        if self.info_json["Account Status: "][0] > 1:
+            if not player_file["Online For: "][0][day][5]:
+                self.info_json["Online For: "][0][day][4] = time_now
+                player_file["Online For: "][0][day][5] = True
+
+            self.info_json["Online For: "][0][day][3] = time_now - player_file["Online For: "][0][day][4]
+        else:
+            self.info_json["Online For: "][0][day][3] = 0
+
+
+if __name__ == "__main__":
+    print("Please run this as an import and initialize the class")
