@@ -142,6 +142,7 @@ class Core:
             self.rename("NumberOfGameBans", "Number of Game Bans: ", "ban", "Could not get number of game bans")
             self.rename("DaysSinceLastBan", "Days Since Last Ban: ", "ban", "Could not get days since last time")
             self.rename("gameextrainfo", "Currently in Game: ", "info", "Currently Not in any Game")
+            self.rename({}, "Time in Game: ", "add")
             self.rename("gameserverip", "IP of Current Game Server: ", "info", "Currently Not in any Server/NA")
             if not game_json_failed:
                 for game in self.game_json:
@@ -290,6 +291,7 @@ class Core:
             print("Failed to get player info..")
 
     def trackTime(self, filename):
+
         player_file = json.loads(open(f"Data/Info/{filename}.json", "r").read())
         raw_time = datetime.now().strftime('%H:%M:%S').split(":")
         time_now = (int(raw_time[0]) * 3600) + (int(raw_time[1]) * 60) + (int(raw_time[2]))
@@ -297,6 +299,8 @@ class Core:
 
         if day not in player_file["Online For: "][0]:
             player_file["Online For: "][0][day] = [0, 0, 0, 0, 0, False]
+        if day not in player_file["Time in Game: "][0]:
+            player_file["Time in Game: "][0][day] = [0, 0, 0, False]
 
         latest_key = 0
         for key, value in player_file.items():
@@ -306,6 +310,17 @@ class Core:
             pass
         else:
             self.info_json["Online For: "][0] = player_file["Online For: "][0]
+            self.info_json["Time in Game: "][0] = player_file["Time in Game: "][0]
+
+        if player_file["Currently in Game: "][0] != self.info_json["Currently in Game: "][0]:
+            if self.info_json["Currently in Game: "][0] != "Currently Not in any Game":
+                self.info_json["Time in Game: "][0][day][2] = time_now
+            else:
+                self.info_json["Time in Game: "][0][day][0] = (time_now -
+                                                               player_file["Time in Game: "][0][day][2] +
+                                                               player_file["Time in Game: "][0][day][0])
+                self.info_json["Time in Game: "][0][day][2] = 0
+
         if player_file["Account Status: "][0] != self.info_json["Account Status: "][0]:
             if self.info_json["Account Status: "][0] == 1:
                 if player_file["Account Status: "][0] > 1:
@@ -326,6 +341,14 @@ class Core:
                     self.info_json["Online For: "][0][day][0] = (time_now - player_file["Online For: "][0][day][4] +
                                                                  player_file["Online For: "][0][day][0])
                 self.info_json["Online For: "][0][day][4] = 0
+
+        if self.info_json["Currently in Game: "][0] != "Currently Not in any Game":
+            if not self.info_json["Time in Game: "][0][day][3]:
+                self.info_json["Time in Game: "][0][day][2] = time_now
+                player_file["Time in Game: "][0][day][3] = True
+
+            self.info_json["Time in Game: "][0][day][1] = (time_now -
+                                                           player_file["Time in Game: "][0][day][2])
 
         if self.info_json["Account Status: "][0] == 1:
             if not player_file["Online For: "][0][day][5]:

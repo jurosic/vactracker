@@ -176,7 +176,8 @@ syntax is 'LOGIN email password recv_email'"""},
                 pass
             else:
                 try:
-                    basic_request = requests.get(f'https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v1/?key={self.key}&steamids={player}')
+                    basic_request = requests.get(
+                        f'https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v1/?key={self.key}&steamids={player}')
                     name = json.loads(basic_request.text)['response']['players']['player'][0]['personaname']
                     info = open(f"Data/Info/{name.replace('.', '_').replace(' ', '_')}.json", "r").read()
 
@@ -246,14 +247,21 @@ syntax is 'LOGIN email password recv_email'"""},
             for info in info_json:
                 if info == 'avatar' or info == 'avatarmedium' or info == 'avatarfull' or info == 'avatarhash' or info == 'personastateflags' or info == 'gameid' or info == 'lobbysteamid':
                     continue
-                if info == "Online For: ":
+                elif info == "Online For: ":
                     day = str(datetime.today().weekday())
-                    player_info.append((info, [f"""TT-O: {round((info_json[info][0][day][0] / 3600) + 
-                                                                       (info_json[info][0][day][1] / 3600), 3)}H""",
+                    player_info.append((info, [f"""TT-O: {round((info_json[info][0][day][0] / 3600) +
+                                                                (info_json[info][0][day][1] / 3600), 3)}H""",
                                                f"TS-O: {round(info_json[info][0][day][1] / 3600, 3)}H",
                                                f"""TT-BALL: {round((info_json[info][0][day][2] / 3600) +
-                                                                      (info_json[info][0][day][3] / 3600), 3)}H""",
+                                                                   (info_json[info][0][day][3] / 3600), 3)}H""",
                                                f"TS-BALL: {round(info_json[info][0][day][3] / 3600, 3)}H"]))
+
+                elif info == "Time in Game: ":
+                    day = str(datetime.today().weekday())
+                    player_info.append((info, [f"""TT-IG: {round((info_json[info][0][day][0] / 3600) +
+                                                                 (info_json[info][0][day][1] / 3600), 3)}H""",
+                                               f"TS-IG: {round(info_json[info][0][day][1] / 3600, 3)}H"]))
+
                 else:
                     player_info.append((info, info_json[info]))
 
@@ -287,7 +295,7 @@ syntax is 'LOGIN email password recv_email'"""},
 
     def _drawGraph(self, name):
         print("Online Time Graph for Multiple Days in Hours: ")
-        print("-"*80)
+        print("-" * 80)
         player_file = open(f"Data/Info/{name}.json", "r").read()
         player_time = json.loads(player_file)["Online For: "][0]
 
@@ -297,8 +305,25 @@ syntax is 'LOGIN email password recv_email'"""},
 
         for key, value in player_time.items():
             labels.append(key)
-            data.append([(value[0]/3600), (value[2]/3600), (value[3]/3600), (value[1]/3600)])
-            normal_data.append([((value[0]/3600)*10), ((value[2]/3600)*10), ((value[3]/3600)*10), ((value[1]/3600)*10)])
+            data.append([(value[0] / 3600), (value[2] / 3600), (value[3] / 3600), (value[1] / 3600)])
+            normal_data.append([((value[0] / 3600) * 10), ((value[2] / 3600) * 10), ((value[3] / 3600) * 10),
+                                ((value[1] / 3600) * 10)])
+
+        tg.stacked_graph(labels, data, normal_data, self.tg_len_categories, self.tg_args, self.tg_colors)
+
+        print("\nIn Game Time Graph for Multiple Days in Hours: ")
+        print("-" * 80)
+        player_file = open(f"Data/Info/{name}.json", "r").read()
+        player_time = json.loads(player_file)["Time in Game: "][0]
+
+        labels = []
+        data = []
+        normal_data = []
+
+        for key, value in player_time.items():
+            labels.append(key)
+            data.append([(value[0] / 3600), (value[1] / 3600)])
+            normal_data.append([((value[0] / 3600) * 10), ((value[1] / 3600) * 10)])
 
         tg.stacked_graph(labels, data, normal_data, self.tg_len_categories, self.tg_args, self.tg_colors)
 
