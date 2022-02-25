@@ -309,8 +309,8 @@ syntax is 'LOGIN email password recv_email'"""},
         for key, value in player_time.items():
             labels.append(key)
             data.append([(value[0] / 3600), (value[2] / 3600), (value[3] / 3600), (value[1] / 3600)])
-            normal_data.append([((value[0] / 3600) * 10), ((value[2] / 3600) * 10), ((value[3] / 3600) * 10),
-                                ((value[1] / 3600) * 10)])
+            normal_data.append([((value[0] / 3600) * 7), ((value[2] / 3600) * 7), ((value[3] / 3600) * 7),
+                                ((value[1] / 3600) * 7)])
 
         tg.stacked_graph(labels, data, normal_data, self.tg_len_categories, self.tg_args, self.tg_colors)
 
@@ -326,7 +326,7 @@ syntax is 'LOGIN email password recv_email'"""},
         for key, value in player_time.items():
             labels.append(key)
             data.append([(value[0] / 3600), (value[1] / 3600)])
-            normal_data.append([((value[0] / 3600) * 10), ((value[1] / 3600) * 10)])
+            normal_data.append([((value[0] / 3600) * 7), ((value[1] / 3600) * 7)])
 
         tg.stacked_graph(labels, data, normal_data, self.tg_len_categories, self.tg_args, self.tg_colors)
 
