@@ -14,6 +14,7 @@ import time
 class Core:
     def __init__(self):
 
+        self.logged_in = None
         self.game_json = None
         self.account = None
         self.send_mail = None
@@ -41,31 +42,9 @@ class Core:
         thread.start()
 
     def start(self):
-        logged_in = False
+        self.logged_in = False
         os.system('clear')
         while True:
-            try:
-                if not logged_in:
-                    notif_config = json.loads(open("Data/notif.json", "r").read())
-                    self.send_mail = notif_config["active"]
-                    if self.send_mail:
-                        server = notif_config["server"]
-                        port = notif_config["port"]
-                        self.account = notif_config["account"]
-                        password = notif_config["password"]
-                        self.user = notif_config["user"]
-
-                        context = ssl.create_default_context()
-                        self.server = smtplib.SMTP(server, port)
-                        self.server.ehlo()
-                        self.server.starttls(context=context)
-                        self.server.ehlo()
-                        self.server.login(self.account, password)
-                        logged_in = True
-
-            except FileNotFoundError:
-                pass
-
             try:
                 players_file = open("Data/players.txt", "r").read()
                 for player in players_file.split(","):
@@ -203,6 +182,7 @@ class Core:
                                 self.info_json["VAC Banned: "].append(json.loads(old_file)["VAC Banned: "][0])
                                 if self.send_mail:
                                     if old_json["VAC Banned: "][0] != self.info_json["VAC Banned: "][0]:
+                                        self._logInOut(True)
                                         message = MIMEMultipart("alternative")
                                         message["Subject"] = "An accounts info has recently changed!"
                                         message["From"] = self.account
@@ -225,8 +205,8 @@ class Core:
                                 os.remove(f"Data/Info/{existing_filename}")
 
                             if self.send_mail:
-
                                 if old_json["Community Banned: "][0] != self.info_json["Community Banned: "][0]:
+                                    self._logInOut(True)
                                     message = MIMEMultipart("alternative")
                                     message["Subject"] = "An accounts info has recently changed!"
                                     message["From"] = self.account
@@ -235,7 +215,8 @@ class Core:
                                     html = f"""\
                                                 <html>
                                                     <body>
-                                                        <p>The player {self.info_json['Persona Name: '][0]} has recently been COMMUNITY Banned! </p>
+                                                        <p>The player {self.info_json['Persona Name: '][0]} has recently\
+                                                         been COMMUNITY Banned! </p>
                                                         <img src={self.info_json['avatarfull']}>
                                                     </body>
                                                 </html>"""
@@ -247,6 +228,7 @@ class Core:
 
                                 if old_json["Number of Game Bans: "][0] != \
                                         self.info_json["Number of Game Bans: "][0]:
+                                    self._logInOut(True)
                                     message = MIMEMultipart("alternative")
                                     message["Subject"] = "An accounts info has recently changed!"
                                     message["From"] = self.account
@@ -255,7 +237,8 @@ class Core:
                                     html = f"""\
                                                 <html>
                                                     <body>
-                                                        <p>The player {self.info_json['Persona Name: '][0]} has recently been GAME Banned! </p>
+                                                        <p>The player {self.info_json['Persona Name: '][0]} has recently\
+                                                         been GAME Banned! </p>
                                                         <img src={self.info_json['avatarfull']}>
                                                     </body>
                                                 </html>"""
@@ -266,6 +249,7 @@ class Core:
                                     self.server.sendmail(self.account, self.user, message.as_string())
 
                                 if old_json["Persona Name: "][0] != self.info_json["Persona Name: "][0]:
+                                    self._logInOut(True)
                                     message = MIMEMultipart("alternative")
                                     message["Subject"] = "An accounts info has recently changed!"
                                     message["From"] = self.account
@@ -274,7 +258,8 @@ class Core:
                                     html = f"""\
                                                 <html>
                                                     <body>
-                                                        <p>The player {json.loads(old_file)["Persona Name: "][0]} has changed his persona name to {self.info_json["Persona Name: "][0]}</p>
+                                                        <p>The player {json.loads(old_file)["Persona Name: "][0]} has\
+                                                         changed his persona name to {self.info_json["Persona Name: "][0]}</p>
                                                         <img src={self.info_json['avatarfull']}>
                                                     </body>
                                                 </html>"""
@@ -283,6 +268,9 @@ class Core:
                                     message.attach(part)
 
                                     self.server.sendmail(self.account, self.user, message.as_string())
+
+                                if not self.logged_in:
+                                    self._logInOut(False)
 
                     except json.decoder.JSONDecodeError:
                         pass
@@ -375,6 +363,33 @@ class Core:
             self.info_json["Online For: "][0][day][3] = time_now - player_file["Online For: "][0][day][4]
         else:
             self.info_json["Online For: "][0][day][3] = 0
+
+    def _logInOut(self, action):
+        if action:
+            try:
+                if not self.logged_in:
+                    notif_config = json.loads(open("Data/notif.json", "r").read())
+                    self.send_mail = notif_config["active"]
+                    if self.send_mail:
+                        server = notif_config["server"]
+                        port = notif_config["port"]
+                        self.account = notif_config["account"]
+                        password = notif_config["password"]
+                        self.user = notif_config["user"]
+
+                        context = ssl.create_default_context()
+                        self.server = smtplib.SMTP(server, port)
+                        self.server.ehlo()
+                        self.server.starttls(context=context)
+                        self.server.ehlo()
+                        self.server.login(self.account, password)
+                        self.logged_in = True
+
+            except FileNotFoundError:
+                pass
+        if not action:
+            self.server.quit()
+            self.logged_in = False
 
 
 if __name__ == "__main__":

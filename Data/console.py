@@ -79,10 +79,10 @@ syntax is 'LOGIN email password recv_email'"""},
                         try:
                             self.commands[inp[0]]["method"](inp[1])
                         except IndexError:
-                            #try:
+                            try:
                                 self.commands[inp[0]]["method"]()
-                            #except TypeError:
-                            #    print("Invalid syntax!")
+                            except TypeError:
+                                print("Invalid syntax!")
             else:
                 print(f"The command '{inp[0]}' does not exist")
 
@@ -255,9 +255,9 @@ syntax is 'LOGIN email password recv_email'"""},
                     player_info.append((info, [f"""TT-O: {round((info_json[info][0][day][0] / 3600) +
                                                                 (info_json[info][0][day][1] / 3600), 3)}H""",
                                                f"TS-O: {round(info_json[info][0][day][1] / 3600, 3)}H",
-                                               f"""TT-BALL: {round((info_json[info][0][day][2] / 3600) +
+                                               f"""TT-BASLL: {round((info_json[info][0][day][2] / 3600) +
                                                                    (info_json[info][0][day][3] / 3600), 3)}H""",
-                                               f"TS-BALL: {round(info_json[info][0][day][3] / 3600, 3)}H"]))
+                                               f"TS-BASLL: {round(info_json[info][0][day][3] / 3600, 3)}H"]))
 
                 elif info == "Time in Game: ":
                     day = str(datetime.today().weekday())
@@ -309,8 +309,8 @@ syntax is 'LOGIN email password recv_email'"""},
         for key, value in player_time.items():
             labels.append(key)
             data.append([(value[0] / 3600), (value[2] / 3600), (value[3] / 3600), (value[1] / 3600)])
-            normal_data.append([((value[0] / 3600) * 7), ((value[2] / 3600) * 7), ((value[3] / 3600) * 7),
-                                ((value[1] / 3600) * 7)])
+            normal_data.append([((value[0] / 3600) * 6), ((value[2] / 3600) * 6), ((value[3] / 3600) * 6),
+                                ((value[1] / 3600) * 6)])
 
         tg.stacked_graph(labels, data, normal_data, self.tg_len_categories, self.tg_args, self.tg_colors)
 
