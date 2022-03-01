@@ -14,6 +14,7 @@ import time
 class Core:
     def __init__(self):
 
+        self.friend_json = None
         self.logged_in = None
         self.game_json = None
         self.account = None
@@ -104,6 +105,9 @@ class Core:
             time.sleep(1)
             game_request = requests.get(
                 f'''https://api.steampowered.com/IPlayerService/GetRecentlyPlayedGames/v0001/?key={self.key}&steamid={steamid}&format=json''')
+            time.sleep(1)
+            friend_request = requests.get(
+                f'''https://api.steampowered.com/ISteamUser/GetFriendList/v0001/?key={self.key}&steamid={steamid}&relationship=friend''')
 
             basic_request.raise_for_status()
             ban_request.raise_for_status()
@@ -116,12 +120,20 @@ class Core:
                 game_json_failed = False
             except KeyError:
                 game_json_failed = True
-                pass
+            try:
+                self.friend_json = json.loads(friend_request.text)["friendslist"]["friends"]
+                friend_json_failed = False
+            except KeyError:
+                friend_json_failed = True
 
             self.rename("personaname", "Persona Name: ", "info", "Could not get persona name")
             self.rename("realname", "Real Name: ", "info", "Could not get real name (not defined/private)")
             self.rename("steamid", "SteamID: ", "strint", "Could not get steamid")
             self.rename("profileurl", "URL: ", "info", "No profile URL")
+            if not friend_json_failed:
+                self.rename(len(self.friend_json), "Amount of Friends: ", "add")
+            else:
+                self.rename("Profile Private", "Amount of Friends: ", "add")
             self.rename("VACBanned", "VAC Banned: ", "ban", "Failed to get VAC status")
             self.rename("CommunityBanned", "Community Banned: ", "ban", "Failed to get GameBan status")
             self.rename("NumberOfGameBans", "Number of Game Bans: ", "ban", "Could not get number of game bans")
@@ -282,7 +294,7 @@ class Core:
         except requests.exceptions.ConnectionError:
             print("steam api did not respond, skipping..")
         except requests.exceptions.HTTPError:
-            print("steam api threw internal server error, skipping...")
+            print("steam api threw an internal server error, skipping...")
         except IndexError:
             print("Failed to get player info..")
 
@@ -302,7 +314,7 @@ class Core:
         for key, value in player_file.items():
             latest_key = key
 
-        if latest_key == 6 and day == 0:
+        if latest_key == "6" and day == 0:
             pass
         else:
             self.info_json["Online For: "][0] = player_file["Online For: "][0]

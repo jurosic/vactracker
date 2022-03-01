@@ -10,7 +10,7 @@ import threading
 import wget
 import climage
 import requests
-
+import time
 
 class Console:
 
@@ -59,6 +59,9 @@ name of a .json file"""},
             "LOGIN": {"method": self.LOGIN,
                       "description": """Logs the program into the email you specified to send notifications\
 syntax is 'LOGIN email password recv_email'"""},
+
+            "FRIENDSLIST": {"method": self.FRIENDSLIST,
+                           "description": "Shows the specified accounts friends"},
 
             "HELP": {"method": self.HELP,
                      "description": """Shows help"""}
@@ -238,6 +241,28 @@ syntax is 'LOGIN email password recv_email'"""},
         print("-----VACTRACKER SHELL-----")
         print("Rebased!")
 
+    def FRIENDSLIST(self, steamid):
+        os.system("clear")
+        print("-----VACTRACKER SHELL-----")
+        try:
+            int(steamid)
+        except ValueError:
+            steamid = SteamID.from_url(f'https://steamcommunity.com/id/{steamid}')
+        friends_request = requests.get(
+            f'''https://api.steampowered.com/ISteamUser/GetFriendList/v0001/?key={self.key}&steamid={steamid}&relationship=friend''')
+        try:
+            friends = json.loads(friends_request.text)["friendslist"]["friends"]
+
+            print(friends)
+
+            for friend in range(len(friends)):
+                friend_steamid = friends[friend]["steamid"]
+                friend_since = time.strftime("%d.%m %Y", time.localtime(friends[friend]["friend_since"]))
+                print(f"SteamID: {[friend_steamid]}, Friends Since: {[friend_since]}")
+
+        except json.decoder.JSONDecodeError:
+            print("Could not get friend list, please try again or make sure the account isn't private")
+
     def INFO(self, name):
         os.system('clear')
 
@@ -326,7 +351,7 @@ syntax is 'LOGIN email password recv_email'"""},
         for key, value in player_time.items():
             labels.append(key)
             data.append([(value[0] / 3600), (value[1] / 3600)])
-            normal_data.append([((value[0] / 3600) * 7), ((value[1] / 3600) * 7)])
+            normal_data.append([((value[0] / 3600) * 6), ((value[1] / 3600) * 6)])
 
         tg.stacked_graph(labels, data, normal_data, self.tg_len_categories, self.tg_args, self.tg_colors)
 
