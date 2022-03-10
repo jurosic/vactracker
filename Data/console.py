@@ -12,6 +12,7 @@ import climage
 import requests
 import time
 
+
 class Console:
 
     def __init__(self):
@@ -61,7 +62,7 @@ name of a .json file"""},
 syntax is 'LOGIN email password recv_email'"""},
 
             "FRIENDSLIST": {"method": self.FRIENDSLIST,
-                           "description": "Shows the specified accounts friends"},
+                            "description": "Shows the specified accounts friends"},
 
             "HELP": {"method": self.HELP,
                      "description": """Shows help"""}
@@ -247,13 +248,21 @@ syntax is 'LOGIN email password recv_email'"""},
         try:
             int(steamid)
         except ValueError:
-            steamid = SteamID.from_url(f'https://steamcommunity.com/id/{steamid}')
+            for filename in os.listdir("Data/Info/"):
+                account = open(f"Data/Info/{filename}", "r").read()
+                account = json.loads(account)
+                if account["Persona Name: "][0] == steamid:
+                    steamid = account["SteamID: "][0]
         friends_request = requests.get(
             f'''https://api.steampowered.com/ISteamUser/GetFriendList/v0001/?key={self.key}&steamid={steamid}&relationship=friend''')
         try:
             friends = json.loads(friends_request.text)["friendslist"]["friends"]
 
+            print(json.loads(friends_request.text))
+
             print(friends)
+
+            print(len(friends))
 
             for friend in range(len(friends)):
                 friend_steamid = friends[friend]["steamid"]
@@ -281,7 +290,7 @@ syntax is 'LOGIN email password recv_email'"""},
                                                                 (info_json[info][0][day][1] / 3600), 3)}H""",
                                                f"TS-O: {round(info_json[info][0][day][1] / 3600, 3)}H",
                                                f"""TT-BASLL: {round((info_json[info][0][day][2] / 3600) +
-                                                                   (info_json[info][0][day][3] / 3600), 3)}H""",
+                                                                    (info_json[info][0][day][3] / 3600), 3)}H""",
                                                f"TS-BASLL: {round(info_json[info][0][day][3] / 3600, 3)}H"]))
 
                 elif info == "Time in Game: ":
