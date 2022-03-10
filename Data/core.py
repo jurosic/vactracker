@@ -14,6 +14,8 @@ import time
 class Core:
     def __init__(self):
 
+        self.friend_json = None
+        self.logged_in = None
         self.game_json = None
         self.account = None
         self.send_mail = None
@@ -41,31 +43,9 @@ class Core:
         thread.start()
 
     def start(self):
-        logged_in = False
+        self.logged_in = False
         os.system('clear')
         while True:
-            try:
-                if not logged_in:
-                    notif_config = json.loads(open("Data/notif.json", "r").read())
-                    self.send_mail = notif_config["active"]
-                    if self.send_mail:
-                        server = notif_config["server"]
-                        port = notif_config["port"]
-                        self.account = notif_config["account"]
-                        password = notif_config["password"]
-                        self.user = notif_config["user"]
-
-                        context = ssl.create_default_context()
-                        self.server = smtplib.SMTP(server, port)
-                        self.server.ehlo()
-                        self.server.starttls(context=context)
-                        self.server.ehlo()
-                        self.server.login(self.account, password)
-                        logged_in = True
-
-            except FileNotFoundError:
-                pass
-
             try:
                 players_file = open("Data/players.txt", "r").read()
                 for player in players_file.split(","):
@@ -106,6 +86,12 @@ class Core:
             except KeyError:
                 self.info_json[f"{new}"] = [failback]
 
+        elif dir_type == "strint":
+            try:
+                self.info_json[f"{new}"] = [int(self.info_json.pop(f"{old}"))]
+            except KeyError:
+                self.info_json[f"{new}"] = [failback]
+
         elif dir_type == "add":
             self.info_json[f"{new}"] = [old]
 
@@ -119,6 +105,9 @@ class Core:
             time.sleep(1)
             game_request = requests.get(
                 f'''https://api.steampowered.com/IPlayerService/GetRecentlyPlayedGames/v0001/?key={self.key}&steamid={steamid}&format=json''')
+            time.sleep(1)
+            friend_request = requests.get(
+                f'''https://api.steampowered.com/ISteamUser/GetFriendList/v0001/?key={self.key}&steamid={steamid}&relationship=friend''')
 
             basic_request.raise_for_status()
             ban_request.raise_for_status()
@@ -131,17 +120,26 @@ class Core:
                 game_json_failed = False
             except KeyError:
                 game_json_failed = True
-                pass
+            try:
+                self.friend_json = json.loads(friend_request.text)["friendslist"]["friends"]
+                friend_json_failed = False
+            except KeyError:
+                friend_json_failed = True
 
             self.rename("personaname", "Persona Name: ", "info", "Could not get persona name")
             self.rename("realname", "Real Name: ", "info", "Could not get real name (not defined/private)")
-            self.rename("steamid", "SteamID: ", "info", "Could not get steamid")
+            self.rename("steamid", "SteamID: ", "strint", "Could not get steamid")
             self.rename("profileurl", "URL: ", "info", "No profile URL")
+            if not friend_json_failed:
+                self.rename(len(self.friend_json), "Amount of Friends: ", "add")
+            else:
+                self.rename("Profile Private", "Amount of Friends: ", "add")
             self.rename("VACBanned", "VAC Banned: ", "ban", "Failed to get VAC status")
             self.rename("CommunityBanned", "Community Banned: ", "ban", "Failed to get GameBan status")
             self.rename("NumberOfGameBans", "Number of Game Bans: ", "ban", "Could not get number of game bans")
             self.rename("DaysSinceLastBan", "Days Since Last Ban: ", "ban", "Could not get days since last time")
             self.rename("gameextrainfo", "Currently in Game: ", "info", "Currently Not in any Game")
+            self.rename({}, "Time in Game: ", "add")
             self.rename("gameserverip", "IP of Current Game Server: ", "info", "Currently Not in any Server/NA")
             if not game_json_failed:
                 for game in self.game_json:
@@ -154,12 +152,14 @@ class Core:
                 self.rename("Account Private", "CS:GO PlayTime 2W: ", "add")
                 self.rename("Account Private", "CS:GO PlayTime Forever: ", "add")
             self.rename("loccountrycode", "Country Code: ", "info", "Does not have a Country Code set")
+            self.rename("locstatecode", "State Code: ", "strint", "Does not have a State Code set")
+            self.rename("loccityid", "City ID: ", "strint", "Does not have a City ID set")
             self.rename("personastate", "Account Status: ", "info", "Could not get Account Status")
             self.rename({}, "Online For: ", "add")
             self.rename("communityvisibilitystate", "Profile Visibility: ", "info", "Could not get Profile Visibility")
             self.rename("profilestate", "Configured Profile: ", "info", "Could not get Configured Profile")
             self.rename("commentpermission", "Comment Permissions: ", "info", "Could not get comment permissions")
-            self.rename("primaryclanid", "Primary Clan ID: ", "info", "Does not have a Primary Clan/Private")
+            self.rename("primaryclanid", "Primary Clan ID: ", "strint", "Does not have a Primary Clan/Private")
             self.rename("timecreated", "Date Created: ", "time", "Could not get time when account was created")
             self.rename("lastlogoff", "Last Logoff: ", "time", "Could not get info about last logoff")
 
@@ -194,6 +194,7 @@ class Core:
                                 self.info_json["VAC Banned: "].append(json.loads(old_file)["VAC Banned: "][0])
                                 if self.send_mail:
                                     if old_json["VAC Banned: "][0] != self.info_json["VAC Banned: "][0]:
+                                        self._logInOut(True)
                                         message = MIMEMultipart("alternative")
                                         message["Subject"] = "An accounts info has recently changed!"
                                         message["From"] = self.account
@@ -216,8 +217,8 @@ class Core:
                                 os.remove(f"Data/Info/{existing_filename}")
 
                             if self.send_mail:
-
                                 if old_json["Community Banned: "][0] != self.info_json["Community Banned: "][0]:
+                                    self._logInOut(True)
                                     message = MIMEMultipart("alternative")
                                     message["Subject"] = "An accounts info has recently changed!"
                                     message["From"] = self.account
@@ -226,7 +227,8 @@ class Core:
                                     html = f"""\
                                                 <html>
                                                     <body>
-                                                        <p>The player {self.info_json['Persona Name: '][0]} has recently been COMMUNITY Banned! </p>
+                                                        <p>The player {self.info_json['Persona Name: '][0]} has recently\
+                                                         been COMMUNITY Banned! </p>
                                                         <img src={self.info_json['avatarfull']}>
                                                     </body>
                                                 </html>"""
@@ -238,6 +240,7 @@ class Core:
 
                                 if old_json["Number of Game Bans: "][0] != \
                                         self.info_json["Number of Game Bans: "][0]:
+                                    self._logInOut(True)
                                     message = MIMEMultipart("alternative")
                                     message["Subject"] = "An accounts info has recently changed!"
                                     message["From"] = self.account
@@ -246,7 +249,8 @@ class Core:
                                     html = f"""\
                                                 <html>
                                                     <body>
-                                                        <p>The player {self.info_json['Persona Name: '][0]} has recently been GAME Banned! </p>
+                                                        <p>The player {self.info_json['Persona Name: '][0]} has recently\
+                                                         been GAME Banned! </p>
                                                         <img src={self.info_json['avatarfull']}>
                                                     </body>
                                                 </html>"""
@@ -257,6 +261,7 @@ class Core:
                                     self.server.sendmail(self.account, self.user, message.as_string())
 
                                 if old_json["Persona Name: "][0] != self.info_json["Persona Name: "][0]:
+                                    self._logInOut(True)
                                     message = MIMEMultipart("alternative")
                                     message["Subject"] = "An accounts info has recently changed!"
                                     message["From"] = self.account
@@ -265,7 +270,8 @@ class Core:
                                     html = f"""\
                                                 <html>
                                                     <body>
-                                                        <p>The player {json.loads(old_file)["Persona Name: "][0]} has changed his persona name to {self.info_json["Persona Name: "][0]}</p>
+                                                        <p>The player {json.loads(old_file)["Persona Name: "][0]} has\
+                                                         changed his persona name to {self.info_json["Persona Name: "][0]}</p>
                                                         <img src={self.info_json['avatarfull']}>
                                                     </body>
                                                 </html>"""
@@ -274,6 +280,9 @@ class Core:
                                     message.attach(part)
 
                                     self.server.sendmail(self.account, self.user, message.as_string())
+
+                                if not self.logged_in:
+                                    self._logInOut(False)
 
                     except json.decoder.JSONDecodeError:
                         pass
@@ -285,11 +294,12 @@ class Core:
         except requests.exceptions.ConnectionError:
             print("steam api did not respond, skipping..")
         except requests.exceptions.HTTPError:
-            print("steam api threw internal server error, skipping...")
+            print("steam api threw an internal server error, skipping...")
         except IndexError:
             print("Failed to get player info..")
 
     def trackTime(self, filename):
+
         player_file = json.loads(open(f"Data/Info/{filename}.json", "r").read())
         raw_time = datetime.now().strftime('%H:%M:%S').split(":")
         time_now = (int(raw_time[0]) * 3600) + (int(raw_time[1]) * 60) + (int(raw_time[2]))
@@ -297,15 +307,28 @@ class Core:
 
         if day not in player_file["Online For: "][0]:
             player_file["Online For: "][0][day] = [0, 0, 0, 0, 0, False]
+        if day not in player_file["Time in Game: "][0]:
+            player_file["Time in Game: "][0][day] = [0, 0, 0, False]
 
         latest_key = 0
         for key, value in player_file.items():
             latest_key = key
 
-        if latest_key == 6 and day == 0:
+        if latest_key == "6" and day == 0:
             pass
         else:
             self.info_json["Online For: "][0] = player_file["Online For: "][0]
+            self.info_json["Time in Game: "][0] = player_file["Time in Game: "][0]
+
+        if player_file["Currently in Game: "][0] != self.info_json["Currently in Game: "][0]:
+            if self.info_json["Currently in Game: "][0] != "Currently Not in any Game":
+                self.info_json["Time in Game: "][0][day][2] = time_now
+            else:
+                self.info_json["Time in Game: "][0][day][0] = (time_now -
+                                                               player_file["Time in Game: "][0][day][2] +
+                                                               player_file["Time in Game: "][0][day][0])
+                self.info_json["Time in Game: "][0][day][2] = 0
+
         if player_file["Account Status: "][0] != self.info_json["Account Status: "][0]:
             if self.info_json["Account Status: "][0] == 1:
                 if player_file["Account Status: "][0] > 1:
@@ -327,6 +350,14 @@ class Core:
                                                                  player_file["Online For: "][0][day][0])
                 self.info_json["Online For: "][0][day][4] = 0
 
+        if self.info_json["Currently in Game: "][0] != "Currently Not in any Game":
+            if not self.info_json["Time in Game: "][0][day][3]:
+                self.info_json["Time in Game: "][0][day][2] = time_now
+                player_file["Time in Game: "][0][day][3] = True
+
+            self.info_json["Time in Game: "][0][day][1] = (time_now -
+                                                           player_file["Time in Game: "][0][day][2])
+
         if self.info_json["Account Status: "][0] == 1:
             if not player_file["Online For: "][0][day][5]:
                 self.info_json["Online For: "][0][day][4] = time_now
@@ -344,6 +375,33 @@ class Core:
             self.info_json["Online For: "][0][day][3] = time_now - player_file["Online For: "][0][day][4]
         else:
             self.info_json["Online For: "][0][day][3] = 0
+
+    def _logInOut(self, action):
+        if action:
+            try:
+                if not self.logged_in:
+                    notif_config = json.loads(open("Data/notif.json", "r").read())
+                    self.send_mail = notif_config["active"]
+                    if self.send_mail:
+                        server = notif_config["server"]
+                        port = notif_config["port"]
+                        self.account = notif_config["account"]
+                        password = notif_config["password"]
+                        self.user = notif_config["user"]
+
+                        context = ssl.create_default_context()
+                        self.server = smtplib.SMTP(server, port)
+                        self.server.ehlo()
+                        self.server.starttls(context=context)
+                        self.server.ehlo()
+                        self.server.login(self.account, password)
+                        self.logged_in = True
+
+            except FileNotFoundError:
+                pass
+        if not action:
+            self.server.quit()
+            self.logged_in = False
 
 
 if __name__ == "__main__":

@@ -10,6 +10,7 @@ import threading
 import wget
 import climage
 import requests
+import time
 
 
 class Console:
@@ -59,6 +60,9 @@ name of a .json file"""},
             "LOGIN": {"method": self.LOGIN,
                       "description": """Logs the program into the email you specified to send notifications\
 syntax is 'LOGIN email password recv_email'"""},
+
+            "FRIENDSLIST": {"method": self.FRIENDSLIST,
+                            "description": "Shows the specified accounts friends"},
 
             "HELP": {"method": self.HELP,
                      "description": """Shows help"""}
@@ -134,8 +138,11 @@ syntax is 'LOGIN email password recv_email'"""},
             if str(steamid) in open("Data/players.txt", "r").read().split(","):
                 print("This player is already in your list.")
             else:
-                players_file.write(f"{steamid},")
-                print(f"Player successfully added to tracklist. {method}")
+                if steamid is not None:
+                    players_file.write(f"{steamid},")
+                    print(f"Player successfully added to tracklist. {method}")
+                else:
+                    print("This player does not exist!")
 
     @staticmethod
     def REMOVE(steamid):
@@ -176,7 +183,8 @@ syntax is 'LOGIN email password recv_email'"""},
                 pass
             else:
                 try:
-                    basic_request = requests.get(f'https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v1/?key={self.key}&steamids={player}')
+                    basic_request = requests.get(
+                        f'https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v1/?key={self.key}&steamids={player}')
                     name = json.loads(basic_request.text)['response']['players']['player'][0]['personaname']
                     info = open(f"Data/Info/{name.replace('.', '_').replace(' ', '_')}.json", "r").read()
 
@@ -234,6 +242,36 @@ syntax is 'LOGIN email password recv_email'"""},
         print("-----VACTRACKER SHELL-----")
         print("Rebased!")
 
+    def FRIENDSLIST(self, steamid):
+        os.system("clear")
+        print("-----VACTRACKER SHELL-----")
+        try:
+            int(steamid)
+        except ValueError:
+            for filename in os.listdir("Data/Info/"):
+                account = open(f"Data/Info/{filename}", "r").read()
+                account = json.loads(account)
+                if account["Persona Name: "][0] == steamid:
+                    steamid = account["SteamID: "][0]
+        friends_request = requests.get(
+            f'''https://api.steampowered.com/ISteamUser/GetFriendList/v0001/?key={self.key}&steamid={steamid}&relationship=friend''')
+        try:
+            friends = json.loads(friends_request.text)["friendslist"]["friends"]
+
+            print(json.loads(friends_request.text))
+
+            print(friends)
+
+            print(len(friends))
+
+            for friend in range(len(friends)):
+                friend_steamid = friends[friend]["steamid"]
+                friend_since = time.strftime("%d.%m %Y", time.localtime(friends[friend]["friend_since"]))
+                print(f"SteamID: {[friend_steamid]}, Friends Since: {[friend_since]}")
+
+        except json.decoder.JSONDecodeError:
+            print("Could not get friend list, please try again or make sure the account isn't private")
+
     def INFO(self, name):
         os.system('clear')
 
@@ -246,14 +284,21 @@ syntax is 'LOGIN email password recv_email'"""},
             for info in info_json:
                 if info == 'avatar' or info == 'avatarmedium' or info == 'avatarfull' or info == 'avatarhash' or info == 'personastateflags' or info == 'gameid' or info == 'lobbysteamid':
                     continue
-                if info == "Online For: ":
+                elif info == "Online For: ":
                     day = str(datetime.today().weekday())
-                    player_info.append((info, [f"""TT-O: {round((info_json[info][0][day][0] / 3600) + 
-                                                                       (info_json[info][0][day][1] / 3600), 3)}H""",
+                    player_info.append((info, [f"""TT-O: {round((info_json[info][0][day][0] / 3600) +
+                                                                (info_json[info][0][day][1] / 3600), 3)}H""",
                                                f"TS-O: {round(info_json[info][0][day][1] / 3600, 3)}H",
-                                               f"""TT-BALL: {round((info_json[info][0][day][2] / 3600) +
-                                                                      (info_json[info][0][day][3] / 3600), 3)}H""",
-                                               f"TS-BALL: {round(info_json[info][0][day][3] / 3600, 3)}H"]))
+                                               f"""TT-BASLL: {round((info_json[info][0][day][2] / 3600) +
+                                                                    (info_json[info][0][day][3] / 3600), 3)}H""",
+                                               f"TS-BASLL: {round(info_json[info][0][day][3] / 3600, 3)}H"]))
+
+                elif info == "Time in Game: ":
+                    day = str(datetime.today().weekday())
+                    player_info.append((info, [f"""TT-IG: {round((info_json[info][0][day][0] / 3600) +
+                                                                 (info_json[info][0][day][1] / 3600), 3)}H""",
+                                               f"TS-IG: {round(info_json[info][0][day][1] / 3600, 3)}H"]))
+
                 else:
                     player_info.append((info, info_json[info]))
 
@@ -287,7 +332,7 @@ syntax is 'LOGIN email password recv_email'"""},
 
     def _drawGraph(self, name):
         print("Online Time Graph for Multiple Days in Hours: ")
-        print("-"*80)
+        print("-" * 80)
         player_file = open(f"Data/Info/{name}.json", "r").read()
         player_time = json.loads(player_file)["Online For: "][0]
 
@@ -297,8 +342,25 @@ syntax is 'LOGIN email password recv_email'"""},
 
         for key, value in player_time.items():
             labels.append(key)
-            data.append([(value[0]/3600), (value[2]/3600), (value[3]/3600), (value[1]/3600)])
-            normal_data.append([((value[0]/3600)*10), ((value[2]/3600)*10), ((value[3]/3600)*10), ((value[1]/3600)*10)])
+            data.append([(value[0] / 3600), (value[2] / 3600), (value[3] / 3600), (value[1] / 3600)])
+            normal_data.append([((value[0] / 3600) * 6), ((value[2] / 3600) * 6), ((value[3] / 3600) * 6),
+                                ((value[1] / 3600) * 6)])
+
+        tg.stacked_graph(labels, data, normal_data, self.tg_len_categories, self.tg_args, self.tg_colors)
+
+        print("\nIn Game Time Graph for Multiple Days in Hours: ")
+        print("-" * 80)
+        player_file = open(f"Data/Info/{name}.json", "r").read()
+        player_time = json.loads(player_file)["Time in Game: "][0]
+
+        labels = []
+        data = []
+        normal_data = []
+
+        for key, value in player_time.items():
+            labels.append(key)
+            data.append([(value[0] / 3600), (value[1] / 3600)])
+            normal_data.append([((value[0] / 3600) * 6), ((value[1] / 3600) * 6)])
 
         tg.stacked_graph(labels, data, normal_data, self.tg_len_categories, self.tg_args, self.tg_colors)
 
