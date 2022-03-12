@@ -45,24 +45,33 @@ class Console:
             "REMOVE": {"method": self.REMOVE,
                        "description": """Removes an accounts .json file and removes them from the players.txt file\
 which in result stops the player from being updated."""},
+
             "ADD": {"method": self.ADD,
                     "description": """Adds an account to the players.txt file and when the core calls\
 a refresh a .json file of this account will be created."""},
+
             "ALL": {"method": self.ALL,
                     "description": "Shows all accounts and their .json file"},
+
             "REBASE": {"method": self.REBASE,
                        "description": "Collects SteamIDs from .json files and adds them to the players.txt file"},
+
+            "FROMFILE": {"method": self.FROMFILE,
+                         "description": "Adds players from a file of SteamIDs or CustomIDs, separated by commas"},
+
             "INFO": {"method": self.INFO,
                      "description": """Shows detailed info about an account, the command parameter has to be the\
 name of a .json file"""},
+
             "CLEAR": {"method": self.CLEAR,
                       "description": "Clears the terminal"},
+
             "LOGIN": {"method": self.LOGIN,
                       "description": """Logs the program into the email you specified to send notifications\
 syntax is 'LOGIN email password recv_email'"""},
 
             "FRIENDLIST": {"method": self.FRIENDLIST,
-                            "description": "Shows the specified accounts friends"},
+                           "description": "Shows the specified accounts friends"},
 
             "HELP": {"method": self.HELP,
                      "description": "Shows help"}
@@ -140,7 +149,7 @@ syntax is 'LOGIN email password recv_email'"""},
             else:
                 if steamid is not None:
                     players_file.write(f"{steamid},")
-                    print(f"Player successfully added to tracklist. {method}")
+                    print(f"Player successfully added to track list. {method}")
                 else:
                     print("This player does not exist!")
 
@@ -217,10 +226,10 @@ syntax is 'LOGIN email password recv_email'"""},
 
                     print(f"{name}, VAC-{vac} COM-{com} GAME-{game} INGAME-{ingame} STATUS-{online}")
 
-                except json.decoder.JSONDecodeError:
-                    print("Failed to read from response, please try again, check if your key is correct")
                 except FileNotFoundError:
                     print(f"No data yet for {name}")
+                except json.decoder.JSONDecodeError:
+                    print("Failed to read from response, please try again, check if your key is correct")
                 except requests.exceptions.ConnectionError:
                     print("Steam api did not respond for this player, try again")
 
@@ -236,11 +245,36 @@ syntax is 'LOGIN email password recv_email'"""},
             for filename in os.listdir("Data/Info/"):
                 player_file = open(f"Data/Info/{filename}").read()
                 player_json = json.loads(player_file)
+                print(f"Rebased: {player_json['Persona Name: '][0]}, {player_json['SteamID: '][0]}")
                 players_file.write(f"{player_json['SteamID: '][0]},")
+        print("Rebasing finished!")
 
+    def FROMFILE(self, filename):
         os.system("clear")
         print("-----VACTRACKER SHELL-----")
-        print("Rebased!")
+
+        with open(filename, "r") as file:
+            with open("Data/players.txt", "a+") as players_file:
+                for line in file:
+                    for player in line.split(","):
+                        if player != "" or player != "\n":
+                            try:
+                                int(player)
+                                method = "(SteamID)"
+                            except ValueError:
+                                player = SteamID.from_url(f'https://steamcommunity.com/id/{player}')
+                                method = "(CustomID)"
+
+                            basic_request = requests.get(
+                                f'https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v1/?key={self.key}&steamids={player}')
+                            name = json.loads(basic_request.text)['response']['players']['player'][0]['personaname']
+
+                            if str(player) in open("Data/players.txt", "r").read().split(","):
+                                print(f"{name} is already in your list. {player}, {method}")
+
+                            else:
+                                players_file.write(f"{player},")
+                                print(f"Added: {name}, {player}, {method}")
 
     def FRIENDLIST(self, steamid):
         os.system("clear")
@@ -261,7 +295,8 @@ syntax is 'LOGIN email password recv_email'"""},
             for friend in range(len(friends)):
                 friend_steamid = friends[friend]["steamid"]
                 friend_since = time.strftime("%d.%m %Y", time.localtime(friends[friend]["friend_since"]))
-                print(f"SteamID: {[friend_steamid]}, URL: [https://steamcommunity.com/profiles/{[friend_steamid][0]}], Friends Since: {[friend_since]}")
+                print(
+                    f"SteamID: {[friend_steamid]}, URL: [https://steamcommunity.com/profiles/{[friend_steamid][0]}], Friends Since: {[friend_since]}")
 
         except json.decoder.JSONDecodeError:
             print("Could not get friend list, please try again or make sure the account isn't private")

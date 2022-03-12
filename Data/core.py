@@ -148,7 +148,7 @@ class Core:
                 self.rename("Account Private", "CS:GO PlayTime 2W: ", "add")
                 self.rename("Account Private", "CS:GO PlayTime Forever: ", "add")
             self.rename("loccountrycode", "Country Code: ", "info", "Does not have a Country Code set")
-            self.rename("locstatecode", "State Code: ", "strint", "Does not have a State Code set")
+            self.rename("locstatecode", "State Code: ", "info", "Does not have a State Code set")
             self.rename("loccityid", "City ID: ", "strint", "Does not have a City ID set")
             self.rename("personastate", "Account Status: ", "info", "Could not get Account Status")
             self.rename({}, "Online For: ", "add")
@@ -208,9 +208,6 @@ class Core:
                                         message.attach(part)
 
                                         self.server.sendmail(self.account, self.user, message.as_string())
-
-                            if json.loads(old_file)["Persona Name: "][0] != self.info_json['Persona Name: '][0]:
-                                os.remove(f"Data/Info/{existing_filename}")
 
                             if self.send_mail:
                                 if old_json["Community Banned: "][0] != self.info_json["Community Banned: "][0]:
@@ -279,6 +276,9 @@ class Core:
 
                                 if not self.logged_in:
                                     self._logInOut(False)
+
+                            if json.loads(old_file)["Persona Name: "][0] != self.info_json['Persona Name: '][0]:
+                                os.remove(f"Data/Info/{existing_filename}")
 
                     except json.decoder.JSONDecodeError:
                         pass
