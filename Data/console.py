@@ -61,7 +61,7 @@ name of a .json file"""},
                       "description": """Logs the program into the email you specified to send notifications\
 syntax is 'LOGIN email password recv_email'"""},
 
-            "FRIENDSLIST": {"method": self.FRIENDSLIST,
+            "FRIENDLIST": {"method": self.FRIENDLIST,
                             "description": "Shows the specified accounts friends"},
 
             "HELP": {"method": self.HELP,
@@ -242,7 +242,7 @@ syntax is 'LOGIN email password recv_email'"""},
         print("-----VACTRACKER SHELL-----")
         print("Rebased!")
 
-    def FRIENDSLIST(self, steamid):
+    def FRIENDLIST(self, steamid):
         os.system("clear")
         print("-----VACTRACKER SHELL-----")
         try:
