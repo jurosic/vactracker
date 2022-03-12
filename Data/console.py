@@ -261,7 +261,7 @@ syntax is 'LOGIN email password recv_email'"""},
             for friend in range(len(friends)):
                 friend_steamid = friends[friend]["steamid"]
                 friend_since = time.strftime("%d.%m %Y", time.localtime(friends[friend]["friend_since"]))
-                print(f"SteamID: {[friend_steamid]}, URL: https://steamcommunity.com/profiles/{[friend_steamid]} Friends Since: {[friend_since]}")
+                print(f"SteamID: {[friend_steamid]}, URL: [https://steamcommunity.com/profiles/{[friend_steamid][0]}], Friends Since: {[friend_since]}")
 
         except json.decoder.JSONDecodeError:
             print("Could not get friend list, please try again or make sure the account isn't private")
