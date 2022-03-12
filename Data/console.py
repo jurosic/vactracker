@@ -49,14 +49,14 @@ which in result stops the player from being updated."""},
                     "description": """Adds an account to the players.txt file and when the core calls\
 a refresh a .json file of this account will be created."""},
             "ALL": {"method": self.ALL,
-                    "description": """Shows all accounts and their .json file"""},
+                    "description": "Shows all accounts and their .json file"},
             "REBASE": {"method": self.REBASE,
-                       "description": """Collects SteamIDs from .json files and adds them to the players.txt file"""},
+                       "description": "Collects SteamIDs from .json files and adds them to the players.txt file"},
             "INFO": {"method": self.INFO,
                      "description": """Shows detailed info about an account, the command parameter has to be the\
 name of a .json file"""},
             "CLEAR": {"method": self.CLEAR,
-                      "description": """Clears the terminal"""},
+                      "description": "Clears the terminal"},
             "LOGIN": {"method": self.LOGIN,
                       "description": """Logs the program into the email you specified to send notifications\
 syntax is 'LOGIN email password recv_email'"""},
@@ -65,7 +65,7 @@ syntax is 'LOGIN email password recv_email'"""},
                             "description": "Shows the specified accounts friends"},
 
             "HELP": {"method": self.HELP,
-                     "description": """Shows help"""}
+                     "description": "Shows help"}
 
         }
 

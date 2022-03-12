@@ -28,7 +28,6 @@ class Core:
         self.key = open("Data/key.txt", "r").readline(32)
         try:
             os.mkdir("Data/Info")
-            os.mkdir("Data/Info/TimeData")
         except FileExistsError:
             pass
         if self.key == "":
@@ -99,13 +98,10 @@ class Core:
         try:
             basic_request = requests.get(
                 f'https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v1/?key={self.key}&steamids={steamid}')
-            time.sleep(1)
             ban_request = requests.get(
                 f'https://api.steampowered.com/ISteamUser/GetPlayerBans/v1/?key={self.key}&steamids={steamid}')
-            time.sleep(1)
             game_request = requests.get(
                 f'''https://api.steampowered.com/IPlayerService/GetRecentlyPlayedGames/v0001/?key={self.key}&steamid={steamid}&format=json''')
-            time.sleep(1)
             friend_request = requests.get(
                 f'''https://api.steampowered.com/ISteamUser/GetFriendList/v0001/?key={self.key}&steamid={steamid}&relationship=friend''')
 
