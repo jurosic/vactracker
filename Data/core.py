@@ -60,36 +60,36 @@ class Core:
                 print("Exiting..")
                 exit()
 
-    def rename(self, old, new, dir_type, failback=""):
+    def rename(self, old, new, dir_type, fallback=""):
         if dir_type == "info":
             try:
                 self.info_json[f"{new}"] = [self.info_json.pop(f"{old}")]
             except KeyError:
-                self.info_json[f"{new}"] = [failback]
+                self.info_json[f"{new}"] = [fallback]
 
         elif dir_type == "time":
             try:
                 self.info_json[f"{new}"] = [time.strftime("%d.%m %Y", time.localtime(self.info_json.pop(f"{old}")))]
             except KeyError:
-                self.info_json[f"{new}"] = [failback]
+                self.info_json[f"{new}"] = [fallback]
 
         elif dir_type == "ban":
             try:
                 self.info_json[f"{new}"] = [self.ban_json.pop(f"{old}")]
             except KeyError:
-                self.ban_json[f"{new}"] = [failback]
+                self.ban_json[f"{new}"] = [fallback]
 
         elif dir_type == "gametime":
             try:
                 self.info_json[f"{new}"] = [f'{round(self.game_list[f"{old}"] / 60, 2)} H']
             except KeyError:
-                self.info_json[f"{new}"] = [failback]
+                self.info_json[f"{new}"] = [fallback]
 
         elif dir_type == "strint":
             try:
                 self.info_json[f"{new}"] = [int(self.info_json.pop(f"{old}"))]
             except KeyError:
-                self.info_json[f"{new}"] = [failback]
+                self.info_json[f"{new}"] = [fallback]
 
         elif dir_type == "add":
             self.info_json[f"{new}"] = [old]
@@ -143,7 +143,7 @@ class Core:
                         self.game_list = game
                         self.rename("playtime_2weeks", "CS:GO PlayTime 2W: ", "gametime", "Could not get PlayTime")
                         self.rename("playtime_forever", "CS:GO PlayTime Forever: ", "gametime",
-                                    "Cound not get PlayTime")
+                                    "Could not get PlayTime")
             else:
                 self.rename("Account Private", "CS:GO PlayTime 2W: ", "add")
                 self.rename("Account Private", "CS:GO PlayTime Forever: ", "add")
@@ -199,8 +199,8 @@ class Core:
                                         html = f"""\
                                                     <html>
                                                         <body>
-                                                            <p>The player {self.info_json['Persona Name: '][0]} has recently\
-                                                             been VAC Banned! </p>
+                                                            <p>The player {self.info_json['Persona Name: '][0]} has \
+                                                            recently been VAC Banned! </p>
                                                             <img src={self.info_json['avatarfull']}>
                                                         </body>
                                                     </html>"""
@@ -223,8 +223,8 @@ class Core:
                                     html = f"""\
                                                 <html>
                                                     <body>
-                                                        <p>The player {self.info_json['Persona Name: '][0]} has recently\
-                                                         been COMMUNITY Banned! </p>
+                                                        <p>The player {self.info_json['Persona Name: '][0]} has \
+                                                         recently been COMMUNITY Banned! </p>
                                                         <img src={self.info_json['avatarfull']}>
                                                     </body>
                                                 </html>"""
@@ -245,8 +245,8 @@ class Core:
                                     html = f"""\
                                                 <html>
                                                     <body>
-                                                        <p>The player {self.info_json['Persona Name: '][0]} has recently\
-                                                         been GAME Banned! </p>
+                                                        <p>The player {self.info_json['Persona Name: '][0]} has \
+                                                        recently been GAME Banned! </p>
                                                         <img src={self.info_json['avatarfull']}>
                                                     </body>
                                                 </html>"""
