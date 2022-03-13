@@ -307,7 +307,7 @@ class Core:
             player_file["Time in Game: "][0][day] = [0, 0, 0, False]
 
         latest_key = 0
-        for key, value in player_file.items():
+        for key, value in player_file["Online For: "][0].items():
             latest_key = key
 
         if latest_key == "6" and day == 0:
