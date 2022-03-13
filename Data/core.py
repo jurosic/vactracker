@@ -28,7 +28,6 @@ class Core:
         self.key = open("Data/key.txt", "r").readline(32)
         try:
             os.mkdir("Data/Info")
-            os.mkdir("Data/Info/TimeData")
         except FileExistsError:
             pass
         if self.key == "":
@@ -61,36 +60,36 @@ class Core:
                 print("Exiting..")
                 exit()
 
-    def rename(self, old, new, dir_type, failback=""):
+    def rename(self, old, new, dir_type, fallback=""):
         if dir_type == "info":
             try:
                 self.info_json[f"{new}"] = [self.info_json.pop(f"{old}")]
             except KeyError:
-                self.info_json[f"{new}"] = [failback]
+                self.info_json[f"{new}"] = [fallback]
 
         elif dir_type == "time":
             try:
                 self.info_json[f"{new}"] = [time.strftime("%d.%m %Y", time.localtime(self.info_json.pop(f"{old}")))]
             except KeyError:
-                self.info_json[f"{new}"] = [failback]
+                self.info_json[f"{new}"] = [fallback]
 
         elif dir_type == "ban":
             try:
                 self.info_json[f"{new}"] = [self.ban_json.pop(f"{old}")]
             except KeyError:
-                self.ban_json[f"{new}"] = [failback]
+                self.ban_json[f"{new}"] = [fallback]
 
         elif dir_type == "gametime":
             try:
                 self.info_json[f"{new}"] = [f'{round(self.game_list[f"{old}"] / 60, 2)} H']
             except KeyError:
-                self.info_json[f"{new}"] = [failback]
+                self.info_json[f"{new}"] = [fallback]
 
         elif dir_type == "strint":
             try:
                 self.info_json[f"{new}"] = [int(self.info_json.pop(f"{old}"))]
             except KeyError:
-                self.info_json[f"{new}"] = [failback]
+                self.info_json[f"{new}"] = [fallback]
 
         elif dir_type == "add":
             self.info_json[f"{new}"] = [old]
@@ -99,13 +98,10 @@ class Core:
         try:
             basic_request = requests.get(
                 f'https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v1/?key={self.key}&steamids={steamid}')
-            time.sleep(1)
             ban_request = requests.get(
                 f'https://api.steampowered.com/ISteamUser/GetPlayerBans/v1/?key={self.key}&steamids={steamid}')
-            time.sleep(1)
             game_request = requests.get(
                 f'''https://api.steampowered.com/IPlayerService/GetRecentlyPlayedGames/v0001/?key={self.key}&steamid={steamid}&format=json''')
-            time.sleep(1)
             friend_request = requests.get(
                 f'''https://api.steampowered.com/ISteamUser/GetFriendList/v0001/?key={self.key}&steamid={steamid}&relationship=friend''')
 
@@ -147,12 +143,12 @@ class Core:
                         self.game_list = game
                         self.rename("playtime_2weeks", "CS:GO PlayTime 2W: ", "gametime", "Could not get PlayTime")
                         self.rename("playtime_forever", "CS:GO PlayTime Forever: ", "gametime",
-                                    "Cound not get PlayTime")
+                                    "Could not get PlayTime")
             else:
                 self.rename("Account Private", "CS:GO PlayTime 2W: ", "add")
                 self.rename("Account Private", "CS:GO PlayTime Forever: ", "add")
             self.rename("loccountrycode", "Country Code: ", "info", "Does not have a Country Code set")
-            self.rename("locstatecode", "State Code: ", "strint", "Does not have a State Code set")
+            self.rename("locstatecode", "State Code: ", "info", "Does not have a State Code set")
             self.rename("loccityid", "City ID: ", "strint", "Does not have a City ID set")
             self.rename("personastate", "Account Status: ", "info", "Could not get Account Status")
             self.rename({}, "Online For: ", "add")
@@ -203,8 +199,8 @@ class Core:
                                         html = f"""\
                                                     <html>
                                                         <body>
-                                                            <p>The player {self.info_json['Persona Name: '][0]} has recently\
-                                                             been VAC Banned! </p>
+                                                            <p>The player {self.info_json['Persona Name: '][0]} has \
+                                                            recently been VAC Banned! </p>
                                                             <img src={self.info_json['avatarfull']}>
                                                         </body>
                                                     </html>"""
@@ -212,9 +208,6 @@ class Core:
                                         message.attach(part)
 
                                         self.server.sendmail(self.account, self.user, message.as_string())
-
-                            if json.loads(old_file)["Persona Name: "][0] != self.info_json['Persona Name: '][0]:
-                                os.remove(f"Data/Info/{existing_filename}")
 
                             if self.send_mail:
                                 if old_json["Community Banned: "][0] != self.info_json["Community Banned: "][0]:
@@ -227,8 +220,8 @@ class Core:
                                     html = f"""\
                                                 <html>
                                                     <body>
-                                                        <p>The player {self.info_json['Persona Name: '][0]} has recently\
-                                                         been COMMUNITY Banned! </p>
+                                                        <p>The player {self.info_json['Persona Name: '][0]} has \
+                                                         recently been COMMUNITY Banned! </p>
                                                         <img src={self.info_json['avatarfull']}>
                                                     </body>
                                                 </html>"""
@@ -249,8 +242,8 @@ class Core:
                                     html = f"""\
                                                 <html>
                                                     <body>
-                                                        <p>The player {self.info_json['Persona Name: '][0]} has recently\
-                                                         been GAME Banned! </p>
+                                                        <p>The player {self.info_json['Persona Name: '][0]} has \
+                                                        recently been GAME Banned! </p>
                                                         <img src={self.info_json['avatarfull']}>
                                                     </body>
                                                 </html>"""
@@ -284,6 +277,9 @@ class Core:
                                 if not self.logged_in:
                                     self._logInOut(False)
 
+                            if json.loads(old_file)["Persona Name: "][0] != self.info_json['Persona Name: '][0]:
+                                os.remove(f"Data/Info/{existing_filename}")
+
                     except json.decoder.JSONDecodeError:
                         pass
             except FileNotFoundError:
@@ -311,7 +307,7 @@ class Core:
             player_file["Time in Game: "][0][day] = [0, 0, 0, False]
 
         latest_key = 0
-        for key, value in player_file.items():
+        for key, value in player_file["Online For: "][0].items():
             latest_key = key
 
         if latest_key == "6" and day == 0:
