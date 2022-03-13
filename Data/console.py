@@ -50,6 +50,9 @@ which in result stops the player from being updated."""},
                     "description": """Adds an account to the players.txt file and when the core calls\
 a refresh a .json file of this account will be created."""},
 
+            "DELETE" : {"method": self.DELETE,
+                        "description": "Deletes the json file specified, if you want it to get reset"},
+
             "ALL": {"method": self.ALL,
                     "description": "Shows all accounts and their .json file"},
 
@@ -174,6 +177,15 @@ syntax is 'LOGIN email password recv_email'"""},
                     print("That account does not exist, please use SteamID")
                     continue
             players_file.close()
+
+    @staticmethod
+    def DELETE(filename):
+        with open(f"Data/Info/{filename}", "r") as file:
+            name = json.loads(file.read())["Persona Name: "][0]
+        if input(f"Are you sure you want to delete {name} [y/N]").lower() == "y":
+            os.remove(f"Data/Info/{filename}")
+        else:
+            print("Cancelling..")
 
     def ALL(self):
         os.system("clear")
