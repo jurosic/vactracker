@@ -166,7 +166,6 @@ class Core:
             except FileNotFoundError:
                 pass
 
-            # Fix this son of a bitch and make it nicer please, and fix the emails ffs >_<
             try:
                 for existing_filename in os.listdir("Data/Info/"):
                     try:
@@ -243,7 +242,9 @@ class Core:
                                                 <html>
                                                     <body>
                                                         <p>The player {self.info_json['Persona Name: '][0]} has \
-                                                        recently been GAME Banned! </p>
+                                                        recently been GAME Banned! That makes a total of \
+                                                        {self.info_json['Number of Game Bans: '][0]} GAME Bans!
+                                                         </p>
                                                         <img src={self.info_json['avatarfull']}>
                                                     </body>
                                                 </html>"""
