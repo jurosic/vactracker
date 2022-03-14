@@ -184,7 +184,10 @@ class Core:
                                                                                     f"{persona_name}(prev)")
                                 else:
                                     self.info_json["Persona Name: "].append(persona_name)
-
+                            try:
+                                self.info_json["VAC Banned: "].append(json.loads(old_file)["VAC Banned: "][1])
+                            except IndexError:
+                                pass
                             if json.loads(old_file)["VAC Banned: "][0] != self.info_json["VAC Banned: "][0]:
                                 self.info_json["VAC Banned: "].append(json.loads(old_file)["VAC Banned: "][0])
                                 if self.send_mail:
