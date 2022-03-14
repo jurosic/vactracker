@@ -310,7 +310,7 @@ class Core:
         for key, value in player_file["Online For: "][0].items():
             latest_key = key
 
-        if latest_key == "6" and day == 0:
+        if latest_key == "6" and day == "0":
             pass
         else:
             self.info_json["Online For: "][0] = player_file["Online For: "][0]
