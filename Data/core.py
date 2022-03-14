@@ -42,7 +42,7 @@ class Core:
         thread.start()
 
     def start(self):
-        self.logged_in = False
+        self._logInOut(True)
         os.system('clear')
         while True:
             try:
