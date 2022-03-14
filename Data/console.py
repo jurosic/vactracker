@@ -70,7 +70,7 @@ name of a .json file"""},
                       "description": "Clears the terminal"},
 
             "LOGIN": {"method": self.LOGIN,
-                      "description": """Logs the program into the email you specified to send notifications\
+                      "description": """Logs the program into the email you specified to send notifications, \
 syntax is 'LOGIN email password recv_email'"""},
 
             "FRIENDLIST": {"method": self.FRIENDLIST,
